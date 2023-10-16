@@ -1,0 +1,8 @@
+# output dir
+dist
+node_modules
+worker
+
+# environmental variables file
+.env
+.env.local
