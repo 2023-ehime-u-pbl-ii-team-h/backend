@@ -3,8 +3,7 @@ APIのパス:/token
 HTTPメソッド:POST
 引数:
  ヘッダ:
-  Authorization:学生番号, Microsoftのパスワード
-  Set-Cookie:学生番号
+  Authorization:Microsoft OAuthのアクセストークン
  本文:
   id(学生番号)相手を指定するため, JSON
 戻り値:
@@ -12,15 +11,15 @@ HTTPメソッド:POST
  見せられるものがないとき:404 Not Found
  認証情報が足りないとき:401 Unauthorized
 
-APIのパス:/attendance
+APIのパス:/attendance?token=発行されたトークン
 概要:学生が打刻する
 HTTPメソッド:POST
 引数:
- 本文:
-  id(学生番号)相手を指定するため, JSON
-  time(打刻日時)時間を指定するため, JSON
+ クエリパラメータ:token=発行されたトークン, データ形式はJSON
 戻り値:
  正常に処理できたとき:200 OK
- 見せられるものがないとき:404 Not Found
+ 登録している時間割から、出席申請できる時間ではない,
+ 既に出席申請されている,
+ 授業開始後30分が経過しているとき:404 Not Found
  認証情報が足りないとき:401 Unauthorized
- アクセス権がないとき:403 Forbidden
+ 許可リストに登録済みのネットワークからアクセスされなかったとき:403 Forbidden
