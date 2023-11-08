@@ -1,11 +1,6 @@
 {
   "compilerOptions": {
-    "lib": [
-      "ES2020"
-    ],
-    "types": [
-      "jest",
-      "@cloudflare/workers-types"
-    ]
+    "lib": ["ES2020"],
+    "types": ["jest", "@cloudflare/workers-types"]
   }
 }

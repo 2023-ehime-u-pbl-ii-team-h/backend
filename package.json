@@ -5,6 +5,7 @@
   "main": "src/index.ts",
   "scripts": {
     "test": "jest --verbose",
+    "format": "prettier . --write",
     "dev": "wrangler dev src/index.ts",
     "deploy": "wrangler publish src/index.ts"
   },
@@ -19,6 +20,7 @@
     "esbuild-jest": "^0.5.0",
     "jest": "^29.7.0",
     "jest-environment-miniflare": "^2.14.1",
+    "prettier": "^3.0.3",
     "wrangler": "^3.13.1"
   }
 }
