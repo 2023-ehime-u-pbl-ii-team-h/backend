@@ -2,3 +2,8 @@ name = "backend"
 main = "src/index.ts"
 
 compatibility_date = "2022-11-22"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "attend-stamp"
+database_id = "f4993fbe-c093-4b99-b553-4ecdadf39775"
