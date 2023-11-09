@@ -1,3 +1,5 @@
+import {ID} from './id'
+
 export type Account = {
     readonly id: ID<Account>;
     readonly email: string;
