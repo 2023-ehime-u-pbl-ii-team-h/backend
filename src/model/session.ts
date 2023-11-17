@@ -10,13 +10,9 @@ export class Session {
         public readonly deviceName: string,
     ) {}
 
-    /*現在時刻と認証情報から新しいセッションを作成する*/
-    static async from(clock: Clock, auth: AuthorizationRepository): Promise<Session> {
-        const session = await nanoid();
-        const id = auth.id;
-        const account = auth.account;
-        const loginAt  = await clock.now();
-        const deviceName  = await auth.deviceName();
+    static newSession(clock: Clock, account: Account, deviceName: string): Session{
+        const id = nanoid() as ID <Session>;
+        const loginAt  = clock.now();
         return {
             id,
             account,
@@ -28,8 +24,4 @@ export class Session {
 
 export type Clock = {
     now(): Date;
-};
-
-export type AuthorizationRepository = AccountRepository & {
-    deviceName(): string;
 };
