@@ -1,6 +1,6 @@
 PRAGMA foreign_keys = ON;
 
-REATE TABLE IF NOT EXISTS 'account'(
+CREATE TABLE IF NOT EXISTS 'account'(
 id TEXT PRIMARY KEY,
 name TEXT NOT NULL,
 email TEXT NOT NULL,
@@ -19,7 +19,7 @@ REFERENCES account(id)
 
 CREATE TABLE IF NOT EXISTS 'subject'(
 id TEXT NOT NULL PRIMARY KEY,
-name TEXT NOT NULL,       
+name TEXT NOT NULL     
 );
 
 CREATE TABLE IF NOT EXISTS 'charge'(
