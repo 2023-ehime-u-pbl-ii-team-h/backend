@@ -1,13 +1,13 @@
 PRAGMA foreign_keys = ON;
 
-CREATE TABLE IF NOT EXISTS 'account'(
+CREATE TABLE IF NOT EXISTS "account"(
 id TEXT PRIMARY KEY,
 name TEXT NOT NULL,
 email TEXT NOT NULL,
 role TEXT NOT NULL CHECK (role IN ('STUDENT', 'TEACHER'))
 );
 
-CREATE TABLE IF NOT EXISTS `session`(
+CREATE TABLE IF NOT EXISTS "session"(
 id TEXT NOT NULL PRIMARY KEY,
 account_id TEXT NOT NULL,
 login_at INTEGER NOT NULL,
@@ -17,12 +17,12 @@ FOREIGN KEY (account_id)
 REFERENCES account(id)
 );
 
-CREATE TABLE IF NOT EXISTS 'subject'(
+CREATE TABLE IF NOT EXISTS "subject"(
 id TEXT NOT NULL PRIMARY KEY,
 name TEXT NOT NULL     
 );
 
-CREATE TABLE IF NOT EXISTS 'charge'(
+CREATE TABLE IF NOT EXISTS "charge"(
 id TEXT PRIMARY KEY,
 teacher_id TEXT NOT NULL,
 subject_id TEXT NOT NULL, 
@@ -33,7 +33,7 @@ FOREIGN KEY (subject_id)
 REFERENCES subject(id)
 );
 
-CREATE TABLE IF NOT EXISTS 'registration'(
+CREATE TABLE IF NOT EXISTS "registration"(
 id TEXT PRIMARY KEY, 
 student_id TEXT, 
 subject_id TEXT,
@@ -44,7 +44,7 @@ FOREIGN KEY (subject_id)
 REFERENCES subject(id)
 );
 
-CREATE TABLE IF NOT EXISTS 'attendance_board'(
+CREATE TABLE IF NOT EXISTS "attendance_board"(
 id TEXT PRIMARY KEY,
 subject_id TEXT NOT NULL,
 start_from INTEGER NOT NULL,
@@ -55,7 +55,7 @@ FOREIGN KEY (subject_id)
 REFERENCES subject(id)
 );
 
-CREATE TABLE IF NOT EXISTS 'attendance'(
+CREATE TABLE IF NOT EXISTS "attendance"(
 id TEXT PRIMARY KEY,
 created_at INTEGER NOT NULL,
 who TEXT NOT NULL,
