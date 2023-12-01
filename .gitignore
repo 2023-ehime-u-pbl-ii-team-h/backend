@@ -6,3 +6,6 @@ worker
 # environmental variables file
 .env
 .env.local
+
+# cloudflare wrangler
+.wrangler
