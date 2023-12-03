@@ -56,13 +56,14 @@ app.post("/login", async(c) => {
       id: nanoid() as ID <Account>,
       email: mails
     }
+    const statement = c.env.DB.prepare("INSERT INTO account (id, name, email, role) VALUES (?1, ?2, ?3, ?4");
     if ( role == 'STUDENT' ){
       const newStudent: Student = {
         Account: newAccount,
         role: "STUDENT",
         enrolling: ID<Subject>[]
       }
-      c.env.DB.prepare("INSERT INTO account (id, name, email, role) VALUES (?1, ?2, ?3, STUDENT)").bind(newStudent.id, name, newStudent.email).run();
+      statement.bind(newStudent.id, name, newStudent.email, newStudent.role);
     }
     else if ( role == 'TEACHER' ){
       const newTeacher: Teacher = {
@@ -70,8 +71,9 @@ app.post("/login", async(c) => {
         role: "TEACHER",
         enrolling: ID<Subject>[]
       }
-      c.env.DB.prepare("INSERT INTO account (id, name, email, role) VALUES (?1, ?2, ?3, TEACHER)").bind(newTeacher.id, name, newTeacher.email).run();
+      statement.bind(newTeacher.id, name, newTeacher.email, newTeacher.role);
     }
+    statement.run();
   }
   else if ( results['email'] != '' ){ //emailがあった
     const account: Account = {
@@ -80,8 +82,8 @@ app.post("/login", async(c) => {
     }
 
     const clock: Clock = {
-      now()
-    }
+      now: () => Date.now(),
+    };
     const newSession = Session.newSession(clock, account, parserResults)
   }
   const option = {
