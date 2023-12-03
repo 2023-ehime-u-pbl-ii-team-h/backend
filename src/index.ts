@@ -20,14 +20,17 @@ const app = new Hono<{
 
 const store = new CookieStore()
 
-app.use("*", poweredBy(), sessionMiddleware({
-  store,
-  encryptionKey: COOKIE_SECRET,
-  expireAfterSeconds: 300,
-  cookieOptions: {
-    httpOnly: true
-  }
-}));
+app.use("*", (c, next) => {
+  const middleware = sessionMiddleware({
+    store,
+    encryptionKey: c.env.COOKIE_SECRET,
+    expireAfterSeconds: 300,
+    cookieOptions: {
+      httpOnly: true,
+    },
+  });
+  return middleware(c, next);
+});
 
 /*Microsoft Graphから情報をとってくる*/
 app.post("/login", async(c) => {
@@ -56,8 +59,8 @@ app.post("/login", async(c) => {
   const parserResults = parser.getResult(); //デバイス名の取得に必要
   
   /*DB内にMcrofoft Graphから得られたemailを持つアカウントがあるか探す*/
-  const { results } = await c.env.DB.prepare("SELECT * FROM account WHERE email = ?").bind(mails).all();
-  const isNewUser = results['email'] == '';
+  const entry = await c.env.DB.prepare("SELECT * FROM account WHERE email = ?").bind(mails).first();
+  const isNewUser = entry == null;
   if ( isNewUser ){
     const account: Account = {
       id: nanoid() as ID <Account>,
@@ -84,14 +87,15 @@ app.post("/login", async(c) => {
   }
   else {
     const account: Account = {
-      id: results['id'] as ID <Account>, 
-      email: results['email']
+      id: entry['id'] as ID <Account>, 
+      email: entry['email'] as string
     }
   }
   const clock: Clock = {
     now: () => Date.now(),
   };
-  const newSession = Session.newSession(clock, account, parserResults);
+  const newSession = Session.newSession(clock, account, parserResults.getDevice().type + parserResults.getBrouser().name);
+  c.get('session').set('login', newSession)
   const option = {
     status: 200,
   }
