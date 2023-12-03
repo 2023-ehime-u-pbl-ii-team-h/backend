@@ -31,35 +31,42 @@ app.use("*", poweredBy(), sessionMiddleware({
 
 /*Microsoft Graphから情報をとってくる*/
 app.post("/login", async(c) => {
-  if ( c.header["Authorization"] == "" ){ //Authorizationがないとき   
+  const token = c.req.header("Authorization");
+  if ( !token ){
     const option = { status: 401 }
     const errorResponse = new Response(null, option);
     return errorResponse;
   }
-  const token = c.header["Authorization"];
+
   const info = await fetch("https://graph.microsoft.com/v1.0/me", {
     headers: {
       "Authorization": token
     }
   });
+
+  if ( !info.ok ){
+    info.text().then(console.log);
+    return new Response(null, { status: 401 });
+  }
   /*とってきた情報を使えるように形を変える*/
   const { mail: mails, jobTitle: role, displayName: name } = await info.json();
 
   /*デバイス名関連*/
-  let parser = new UAParser(c.req.header("user-agent"));
-  let parserResults = parser.getResult(); //デバイス名の取得に必要
+  const parser = new UAParser(c.req.header("user-agent"));
+  const parserResults = parser.getResult(); //デバイス名の取得に必要
   
   /*DB内にMcrofoft Graphから得られたemailを持つアカウントがあるか探す*/
-  let { results } = await c.env.DB.prepare("SELECT * FROM account WHERE email = ?").bind(mails).all();
-  if ( results['email'] == '' ){ //emailがなかったとき
-    const newAccount: Account = {
+  const { results } = await c.env.DB.prepare("SELECT * FROM account WHERE email = ?").bind(mails).all();
+  const isNewUser = results['email'] == '';
+  if ( isNewUser ){
+    const account: Account = {
       id: nanoid() as ID <Account>,
       email: mails
     }
     const statement = c.env.DB.prepare("INSERT INTO account (id, name, email, role) VALUES (?1, ?2, ?3, ?4");
     if ( role == 'STUDENT' ){
       const newStudent: Student = {
-        Account: newAccount,
+        Account: account,
         role: "STUDENT",
         enrolling: ID<Subject>[]
       }
@@ -67,7 +74,7 @@ app.post("/login", async(c) => {
     }
     else if ( role == 'TEACHER' ){
       const newTeacher: Teacher = {
-        Account: newAccount,
+        Account: account,
         role: "TEACHER",
         enrolling: ID<Subject>[]
       }
@@ -75,17 +82,16 @@ app.post("/login", async(c) => {
     }
     statement.run();
   }
-  else if ( results['email'] != '' ){ //emailがあった
+  else {
     const account: Account = {
       id: results['id'] as ID <Account>, 
       email: results['email']
     }
-
-    const clock: Clock = {
-      now: () => Date.now(),
-    };
-    const newSession = Session.newSession(clock, account, parserResults)
   }
+  const clock: Clock = {
+    now: () => Date.now(),
+  };
+  const newSession = Session.newSession(clock, account, parserResults);
   const option = {
     status: 200,
   }
