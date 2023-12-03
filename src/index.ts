@@ -10,28 +10,40 @@ type Bindings = {
   DB: D1Database;
 };
 
-const app = new Hono<{ Bindings: Bindings }>();
+const app = new Hono<{
+  Bindings: Bindings
+  Variables: {
+    session: Session,
+    session_key_rotation: boolean
+  }
+}>();
 
-app.use("*", poweredBy());
+const store = new CookieStore()
+
+app.use("*", poweredBy(), sessionMiddleware({
+  store,
+  encryptionKey: COOKIE_SECRET,
+  expireAfterSeconds: 300,
+  cookieOptions: {
+    httpOnly: true
+  }
+}));
 
 /*Microsoft Graphから情報をとってくる*/
 app.post("/login", async(c) => {
   if ( c.header["Authorization"] == "" ){ //Authorizationがないとき   
-    const option = { status: 401}
+    const option = { status: 401 }
     const errorResponse = new Response(null, option);
     return errorResponse;
   }
   const token = c.header["Authorization"];
-  const response = await fetch("https://graph.microsoft.com/v1.0/me", {
+  const info = await fetch("https://graph.microsoft.com/v1.0/me", {
     headers: {
-      "Authorization": Bearer token
+      "Authorization": token
     }
   });
   /*とってきた情報を使えるように形を変える*/
-  const movie = await response.json();
-  const mails = movie.mail;
-  const role = movie.jobTitle;
-  const name = movie.displayName;
+  const { mail: mails, jobTitle: role, displayName: name } = await info.json();
 
   /*デバイス名関連*/
   let parser = new UAParser(c.req.header("user-agent"));
@@ -45,11 +57,12 @@ app.post("/login", async(c) => {
       email: mails
     }
     if ( role == 'STUDENT' ){
-      const newStudet: Student = {
+      const newStudent: Student = {
         Account: newAccount,
         role: "STUDENT",
         enrolling: ID<Subject>[]
       }
+      c.env.DB.prepare("INSERT INTO account (id, name, email, role) VALUES (?1, ?2, ?3, STUDENT)").bind(newStudent.id, name, newStudent.email).run();
     }
     else if ( role == 'TEACHER' ){
       const newTeacher: Teacher = {
@@ -57,8 +70,8 @@ app.post("/login", async(c) => {
         role: "TEACHER",
         enrolling: ID<Subject>[]
       }
+      c.env.DB.prepare("INSERT INTO account (id, name, email, role) VALUES (?1, ?2, ?3, TEACHER)").bind(newTeacher.id, name, newTeacher.email).run();
     }
-    c.env.DB.prepare("INSERT INTO account (id, name, email, role) VALUES (?1, ?2, ?3, STUDENT)").bind(newAccount.id, name, mails).run();
   }
   else if ( results['email'] != '' ){ //emailがあった
     const account: Account = {
@@ -73,9 +86,9 @@ app.post("/login", async(c) => {
   }
   const option = {
     status: 200,
-    headers: Set-Cookie: COOKIE_SECRET = newSession; HttpOnly; Max-Age= 300}
-    const response = new Response(null, option);
-    return response;
+  }
+  const response = new Response(null, option);
+  return response;
 });
 
 export default app;
