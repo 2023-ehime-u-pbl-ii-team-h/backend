@@ -32,7 +32,7 @@ app.use("*", (c, next) => {
   return middleware(c, next);
 });
 
-async function getOrNewAccount(db: D1Database, mails, role, name): Promise<Account>{
+async function getOrNewAccount(db: D1Database, mails: string, role: string, name: string): Promise<Account>{
   const entry = await db.prepare("SELECT * FROM account WHERE email = ?").bind(mails).first();
   const isNewUser = entry == null;
   if ( isNewUser ){
@@ -41,7 +41,10 @@ async function getOrNewAccount(db: D1Database, mails, role, name): Promise<Accou
       email: mails
     };
     const statement = db.prepare("INSERT INTO account (id, name, email, role) VALUES (?1, ?2, ?3, ?4");
-    if ( role == "STUDENT" ){
+    
+    const isStudent = /^[a-z]\d{6}[a-z]@mails\.cc\.ehime-u\.ac\.jp$/.test(mails);
+    const isTeacher = /@(.+\.)?ehime-u\.ac\.jp$/.test(mails);
+    if ( isStudent ){
       const newStudent: Student = {
         account,
         role: "STUDENT",
@@ -49,7 +52,7 @@ async function getOrNewAccount(db: D1Database, mails, role, name): Promise<Accou
       };
       statement.bind(newStudent.id, name, newStudent.email, newStudent.role);
     }
-    else if ( role == "TEACHER" ){
+    else if ( isTeacher ){
       const newTeacher: Teacher = {
         account,
         role: "TEACHER",
@@ -57,15 +60,16 @@ async function getOrNewAccount(db: D1Database, mails, role, name): Promise<Accou
       };
       statement.bind(newTeacher.id, name, newTeacher.email, newTeacher.role);
     }
+    else {
+      return null;
+    }
     await statement.run();
     return account;
   }
-  else {
-    return {
-      id: entry['id'] as ID <Account>, 
-      email: entry['email'] as string
-    };
-  }
+  return {
+    id: entry['id'] as ID <Account>, 
+    email: entry['email'] as string
+  };
 };
 
 /*Microsoft Graphから情報をとってくる*/
@@ -95,16 +99,15 @@ app.post("/login", async(c) => {
   const parserResults = parser.getResult(); //デバイス名の取得に必要
   
   const account =  await getOrNewAccount(c.env.DB, mails, role, name);
+  if ( !account ){
+    return new Response(null, { status: 401 });
+  }
   const clock: Clock = {
     now: () => Date.now(),
   };
   const newSession = Session.newSession(clock, account, parserResults.getDevice().type + parserResults.getBrouser().name);
   c.get('session').set('login', newSession);
-  const option = {
-    status: 200,
-  }
-  const response = new Response(null, option);
-  return response;
+  return new Response();
 });
 
 export default app;
