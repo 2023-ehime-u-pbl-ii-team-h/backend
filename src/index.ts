@@ -32,6 +32,42 @@ app.use("*", (c, next) => {
   return middleware(c, next);
 });
 
+async function getOrNewAccount(db: D1Database, mails, role, name): Promise<Account>{
+  const entry = await db.prepare("SELECT * FROM account WHERE email = ?").bind(mails).first();
+  const isNewUser = entry == null;
+  if ( isNewUser ){
+    const account: Account = {
+      id: nanoid() as ID <Account>,
+      email: mails
+    };
+    const statement = db.prepare("INSERT INTO account (id, name, email, role) VALUES (?1, ?2, ?3, ?4");
+    if ( role == "STUDENT" ){
+      const newStudent: Student = {
+        account,
+        role: "STUDENT",
+        enrolling: [],
+      };
+      statement.bind(newStudent.id, name, newStudent.email, newStudent.role);
+    }
+    else if ( role == "TEACHER" ){
+      const newTeacher: Teacher = {
+        account,
+        role: "TEACHER",
+        enrolling: [],
+      };
+      statement.bind(newTeacher.id, name, newTeacher.email, newTeacher.role);
+    }
+    await statement.run();
+    return account;
+  }
+  else {
+    return {
+      id: entry['id'] as ID <Account>, 
+      email: entry['email'] as string
+    };
+  }
+};
+
 /*Microsoft Graphから情報をとってくる*/
 app.post("/login", async(c) => {
   const token = c.req.header("Authorization");
@@ -58,41 +94,7 @@ app.post("/login", async(c) => {
   const parser = new UAParser(c.req.header("user-agent"));
   const parserResults = parser.getResult(); //デバイス名の取得に必要
   
-  const account =  await function getOrNewAccount(c.env.DB: Bindings){
-    const entry = await c.env.DB.prepare("SELECT * FROM account WHERE email = ?").bind(mails).first();
-    const isNewUser = entry == null;
-    if ( isNewUser ){
-      const account: Account = {
-        id: nanoid() as ID <Account>,
-        email: mails
-      };
-      const statement = c.env.DB.prepare("INSERT INTO account (id, name, email, role) VALUES (?1, ?2, ?3, ?4");
-      if ( role == 'STUDENT' ){
-        const newStudent: Student = {
-          Account: account,
-          role: "STUDENT",
-          enrolling: ID<Subject>[]
-        };
-        statement.bind(newStudent.id, name, newStudent.email, newStudent.role);
-      }
-      else if ( role == 'TEACHER' ){
-        const newTeacher: Teacher = {
-          Account: account,
-          role: "TEACHER",
-          enrolling: ID<Subject>[]
-        };
-        statement.bind(newTeacher.id, name, newTeacher.email, newTeacher.role);
-      }
-      await statement.run();
-    }
-    else {
-      const account: Account = {
-        id: entry['id'] as ID <Account>, 
-        email: entry['email'] as string
-      };
-    }
-    return account;
-  };
+  const account =  await getOrNewAccount(c.env.DB, mails, role, name);
   const clock: Clock = {
     now: () => Date.now(),
   };
