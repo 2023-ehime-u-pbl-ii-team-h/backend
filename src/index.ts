@@ -32,7 +32,7 @@ app.use("*", (c, next) => {
   return middleware(c, next);
 });
 
-async function getOrNewAccount(db: D1Database, mails: string, role: string, name: string): Promise<Account>{
+async function getOrNewAccount(db: D1Database, mails: string, role: string, name: string): Promise<Account | null>{
   const entry = await db.prepare("SELECT * FROM account WHERE email = ?").bind(mails).first();
   const isNewUser = entry == null;
   if ( isNewUser ){
@@ -72,8 +72,8 @@ async function getOrNewAccount(db: D1Database, mails: string, role: string, name
   };
 };
 
-/*Microsoft Graphから情報をとってくる*/
 app.post("/login", async(c) => {
+  /*Microsoft Graphから情報をとってくる*/
   const token = c.req.header("Authorization");
   if ( !token ){
     const option = { status: 401 }
