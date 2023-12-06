@@ -6,6 +6,8 @@ import { poweredBy } from "hono/powered-by";
 import { Session, Clock } from "./model/session";
 import { sessionMiddleware, CookieStore, Session } from 'hono-sessions'
 
+const MICROSOFT_GRAPH_API_ROOT = "https://graph.microsoft.com/v1.0";
+
 type Bindings = {
   DB: D1Database;
 };
@@ -32,7 +34,7 @@ app.use("*", (c, next) => {
   return middleware(c, next);
 });
 
-async function getOrNewAccount(db: D1Database, mails: string, role: string, name: string): Promise<Account | null>{
+async function getOrNewAccount(db: D1Database, mails: string, name: string): Promise<Account | null>{
   const entry = await db.prepare("SELECT * FROM account WHERE email = ?").bind(mails).first();
   const isNewUser = entry == null;
   if ( isNewUser ){
@@ -40,7 +42,7 @@ async function getOrNewAccount(db: D1Database, mails: string, role: string, name
       id: nanoid() as ID <Account>,
       email: mails
     };
-    const statement = db.prepare("INSERT INTO account (id, name, email, role) VALUES (?1, ?2, ?3, ?4");
+    const statement = db.prepare("INSERT INTO account (id, name, email, role) VALUES (?1, ?2, ?3, ?4)");
     
     const isStudent = /^[a-z]\d{6}[a-z]@mails\.cc\.ehime-u\.ac\.jp$/.test(mails);
     const isTeacher = /@(.+\.)?ehime-u\.ac\.jp$/.test(mails);
@@ -81,7 +83,7 @@ app.post("/login", async(c) => {
     return errorResponse;
   }
 
-  const info = await fetch("https://graph.microsoft.com/v1.0/me", {
+  const info = await fetch(MICROSOFT_GRAPH_API_ROOT + "/me", {
     headers: {
       "Authorization": token
     }
@@ -92,13 +94,13 @@ app.post("/login", async(c) => {
     return new Response(null, { status: 401 });
   }
   /*とってきた情報を使えるように形を変える*/
-  const { mail: mails, jobTitle: role, displayName: name } = await info.json();
+  const { mail: mails, displayName: name } = await info.json();
 
   /*デバイス名関連*/
   const parser = new UAParser(c.req.header("user-agent"));
   const parserResults = parser.getResult(); //デバイス名の取得に必要
   
-  const account =  await getOrNewAccount(c.env.DB, mails, role, name);
+  const account =  await getOrNewAccount(c.env.DB, mails, name);
   if ( !account ){
     return new Response(null, { status: 401 });
   }
