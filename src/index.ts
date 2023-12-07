@@ -99,7 +99,7 @@ function encodeBase64Url(array: ArrayBuffer): string {
   const bytes = Array.from(new Uint8Array(array))
     .map((byte) => String.fromCharCode(byte))
     .reduce((str, digit) => str + digit, "");
-  return btoa(bytes).replace("+", "-").replace("/", "_").replace("=", "");
+  return btoa(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
 
 app.get("/login", async (c) => {
