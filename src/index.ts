@@ -1,7 +1,4 @@
 import { Hono, MiddlewareHandler } from "hono";
-import { nanoid } from "nanoid";
-import { ID } from "./model/id";
-import { Account, Student, Teacher } from "./model/account";
 import { Session, Clock } from "./model/session";
 import {
   sessionMiddleware,
@@ -10,6 +7,8 @@ import {
 } from "hono-sessions";
 import { UAParser } from "ua-parser-js";
 import { generatePkceKeys } from "./model/auth";
+import { getOrNewAccount } from "./service/get-or-new-account";
+import { D1AccountRepository } from "./adaptor/account";
 
 const MICROSOFT_GRAPH_API_ROOT = "https://graph.microsoft.com/v1.0";
 const MICROSOFT_OAUTH_ROOT =
@@ -44,55 +43,6 @@ app.use("*", (c, next) => {
   }) as unknown as MiddlewareHandler;
   return middleware(c, next);
 });
-
-async function getOrNewAccount(
-  db: D1Database,
-  mails: string,
-  name: string,
-): Promise<Account | null> {
-  const entry = await db
-    .prepare("SELECT * FROM account WHERE email = ?")
-    .bind(mails)
-    .first();
-  const isNewUser = entry == null;
-  if (isNewUser) {
-    const account: Account = {
-      id: nanoid() as ID<Account>,
-      email: mails,
-    };
-    const statement = db.prepare(
-      "INSERT INTO account (id, name, email, role) VALUES (?1, ?2, ?3, ?4)",
-    );
-
-    const isStudent = /^[a-z]\d{6}[a-z]@mails\.cc\.ehime-u\.ac\.jp$/.test(
-      mails,
-    );
-    const isTeacher = /@(.+\.)?ehime-u\.ac\.jp$/.test(mails);
-    if (isStudent) {
-      const newStudent: Student = {
-        ...account,
-        role: "STUDENT",
-        enrolling: [],
-      };
-      statement.bind(newStudent.id, name, newStudent.email, newStudent.role);
-    } else if (isTeacher) {
-      const newTeacher: Teacher = {
-        ...account,
-        role: "TEACHER",
-        assigned: [],
-      };
-      statement.bind(newTeacher.id, name, newTeacher.email, newTeacher.role);
-    } else {
-      return null;
-    }
-    await statement.run();
-    return account;
-  }
-  return {
-    id: entry["id"] as ID<Account>,
-    email: entry["email"] as string,
-  };
-}
 
 const PKCE_VERIFIER_KEY = "pkce_verifier";
 
@@ -166,7 +116,11 @@ app.post("/redirect", async (c) => {
   const parser = new UAParser(c.req.header("user-agent"));
   const parserResults = parser.getResult();
 
-  const account = await getOrNewAccount(c.env.DB, mails, name);
+  const account = await getOrNewAccount(
+    new D1AccountRepository(c.env.DB),
+    mails,
+    name,
+  );
   if (!account) {
     return new Response(null, { status: 401 });
   }
