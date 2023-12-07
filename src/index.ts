@@ -134,7 +134,7 @@ app.get("/login", async (c) => {
         redirect_uri: new URL("/redirect", c.req.url).toString(),
         response_mode: "query",
         scope: AZURE_APP_SCOPE,
-        state: c.req.header("Referer"),
+        state: c.req.header("Referer") ?? "",
         code_challenge: challenge,
         code_challenge_method: PKCE_CHALLENGE_METHOD,
       });
