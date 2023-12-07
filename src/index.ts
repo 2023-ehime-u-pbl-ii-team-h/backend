@@ -11,10 +11,15 @@ import {
 import { UAParser } from "ua-parser-js";
 
 const MICROSOFT_GRAPH_API_ROOT = "https://graph.microsoft.com/v1.0";
+const MICROSOFT_OAUTH_ROOT =
+  "https://login.microsoftonline.com/orginzations/oauth2/v2.0";
+const AZURE_CLIENT_ID = "788aebee-7aa0-4286-b58c-7e35bf22e92a";
+const AZURE_APP_SCOPE = "https://graph.microsoft.com/user.read";
 
 type Bindings = {
   DB: D1Database;
   COOKIE_SECRET: string;
+  AZURE_CLIENT_SECRET: string;
 };
 
 const app = new Hono<{
@@ -88,17 +93,89 @@ async function getOrNewAccount(
   };
 }
 
-app.post("/login", async (c) => {
-  const token = c.req.header("Authorization");
-  if (!token) {
-    const option = { status: 401 };
-    const errorResponse = new Response(null, option);
-    return errorResponse;
+interface PkceCodes {
+  challengeMethod: string;
+  verifier: string;
+  challenge: string;
+}
+
+const PKCE_CODES_KEY = "pkce_codes";
+const PKCE_CHALLENGE_METHOD = "S256";
+
+function encodeBase64Url(array: ArrayBuffer): string {
+  const bytes = Array.from(new Uint8Array(array))
+    .map((byte) => String.fromCharCode(byte))
+    .reduce((str, digit) => str + digit, "");
+  return btoa(bytes).replace("+", "-").replace("/", "_").replace("=", "");
+}
+
+app.get("/login", async (c) => {
+  const randomArray = crypto.getRandomValues(new Uint8Array(32));
+  const verifier = encodeBase64Url(randomArray);
+  const challengeArray = await crypto.subtle.digest(
+    { name: "SHA-256" },
+    randomArray,
+  );
+  const challenge = encodeBase64Url(challengeArray);
+
+  c.get("session").set(PKCE_CODES_KEY, {
+    challengeMethod: PKCE_CHALLENGE_METHOD,
+    verifier,
+    challenge,
+  });
+
+  try {
+    const authorizeUrl =
+      MICROSOFT_OAUTH_ROOT +
+      "/authorize?" +
+      new URLSearchParams({
+        client_id: AZURE_CLIENT_ID,
+        response_type: "code",
+        redirect_uri: new URL("/redirect", c.req.url).toString(),
+        response_mode: "query",
+        scope: AZURE_APP_SCOPE,
+        state: c.req.header("Referer"),
+        code_challenge: challenge,
+        code_challenge_method: PKCE_CHALLENGE_METHOD,
+      });
+    return c.redirect(authorizeUrl);
+  } catch (error) {
+    console.dir(error);
+    return c.text("Internal Server Error", 500);
   }
+});
+
+app.get("/redirect", async (c) => {
+  const session = c.get("session");
+  const codes = session.get(PKCE_CODES_KEY) as PkceCodes;
+  session.set(PKCE_CODES_KEY, {});
+
+  const res = await fetch(MICROSOFT_OAUTH_ROOT + "/token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      client_id: AZURE_CLIENT_ID,
+      scope: AZURE_APP_SCOPE,
+      code: c.req.query("code"),
+      redirect_uri: new URL("/redirect", c.req.url).toString(),
+      code_verifier: codes.verifier,
+      client_secret: c.env.AZURE_CLIENT_SECRET,
+    }),
+  });
+  if (!res.ok) {
+    res.text().then(console.log);
+    return c.text("Bad Request", 400);
+  }
+
+  const { access_token: accessToken } = (await res.json()) as {
+    access_token: string;
+  };
 
   const info = await fetch(MICROSOFT_GRAPH_API_ROOT + "/me", {
     headers: {
-      Authorization: token,
+      Authorization: "Bearer " + accessToken,
     },
   });
 
@@ -107,14 +184,13 @@ app.post("/login", async (c) => {
     return new Response(null, { status: 401 });
   }
 
-  const { mail: mails, displayName: name } = await info.json<{
+  const { mail: mails, displayName: name } = (await info.json()) as {
     mail: string;
     displayName: string;
-  }>();
+  };
 
-  /*デバイス名関連*/
   const parser = new UAParser(c.req.header("user-agent"));
-  const parserResults = parser.getResult(); //デバイス名の取得に必要
+  const parserResults = parser.getResult();
 
   const account = await getOrNewAccount(c.env.DB, mails, name);
   if (!account) {
@@ -128,7 +204,7 @@ app.post("/login", async (c) => {
     account,
     parserResults.device.type + parserResults.browser.name,
   );
-  c.get("session").set("login", newSession);
+  session.set("login", newSession);
   return new Response();
 });
 
