@@ -1,20 +1,14 @@
 import { Hono, MiddlewareHandler } from "hono";
-import { Session, Clock } from "./model/session";
 import {
   sessionMiddleware,
   CookieStore,
   Session as HonoSession,
 } from "hono-sessions";
-import { UAParser } from "ua-parser-js";
-import { generatePkceKeys } from "./model/auth";
-import { getOrNewAccount } from "./service/get-or-new-account";
+import { REDIRECT_API_PATH, login, loginRedirect } from "./service/login";
+import { HonoSessionRepository } from "./adaptor/session";
+import { MicrosoftGraph } from "./adaptor/microsoft-graph";
+import { MicrosoftOAuth } from "./adaptor/microsoft-oauth";
 import { D1AccountRepository } from "./adaptor/account";
-
-const MICROSOFT_GRAPH_API_ROOT = "https://graph.microsoft.com/v1.0";
-const MICROSOFT_OAUTH_ROOT =
-  "https://login.microsoftonline.com/organizations/oauth2/v2.0";
-const AZURE_CLIENT_ID = "788aebee-7aa0-4286-b58c-7e35bf22e92a";
-const AZURE_APP_SCOPE = "https://graph.microsoft.com/user.read";
 
 type Bindings = {
   DB: D1Database;
@@ -44,96 +38,37 @@ app.use("*", (c, next) => {
   return middleware(c, next);
 });
 
-const PKCE_VERIFIER_KEY = "pkce_verifier";
-
 app.get("/login", async (c) => {
-  const { verifier, challenge } = await generatePkceKeys();
-
-  c.get("session").set(PKCE_VERIFIER_KEY, verifier);
-
-  const authorizeUrl =
-    MICROSOFT_OAUTH_ROOT +
-    "/authorize?" +
-    new URLSearchParams({
-      client_id: AZURE_CLIENT_ID,
-      response_type: "code",
-      redirect_uri: new URL("/redirect", c.req.url).toString(),
-      response_mode: "form_post",
-      scope: AZURE_APP_SCOPE,
-      state: c.req.header("Referer") ?? "",
-      code_challenge: challenge,
-      code_challenge_method: "S256",
-    });
-  return c.redirect(authorizeUrl);
+  const redirectUrl = await login(
+    {
+      requestUrl: c.req.url,
+      requestReferer: c.req.header("Referer") ?? "",
+    },
+    new MicrosoftOAuth(),
+    new HonoSessionRepository(c.get("session")),
+  );
+  return c.redirect(redirectUrl);
 });
 
-app.post("/redirect", async (c) => {
+app.post(REDIRECT_API_PATH, async (c) => {
   const form = await c.req.formData();
   const session = c.get("session");
-  const verifier = session.get(PKCE_VERIFIER_KEY) as string;
-  session.set(PKCE_VERIFIER_KEY, "");
 
-  const res = await fetch(MICROSOFT_OAUTH_ROOT + "/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Origin: "",
-    },
-    body: new URLSearchParams({
-      client_id: AZURE_CLIENT_ID,
-      scope: AZURE_APP_SCOPE,
+  const sessionRepo = new HonoSessionRepository(session);
+  const redirectUrl = await loginRedirect({
+    query: {
       code: form.get("code"),
-      redirect_uri: new URL("/redirect", c.req.url).toString(),
-      grant_type: "authorization_code",
-      code_verifier: verifier,
-    }),
-  });
-  if (!res.ok) {
-    res.text().then(console.log);
-    return c.text("Bad Request", 400);
-  }
-
-  const { access_token: accessToken } = (await res.json()) as {
-    access_token: string;
-  };
-
-  const info = await fetch(MICROSOFT_GRAPH_API_ROOT + "/me", {
-    headers: {
-      Authorization: "Bearer " + accessToken,
+      requestUrl: c.req.url,
+      userAgent: c.req.header("user-agent"),
+      returnUrl: form.get("state"),
     },
+    accessTokenService: new MicrosoftOAuth(),
+    verifierRepo: sessionRepo,
+    userRepo: new MicrosoftGraph(),
+    accountRepo: new D1AccountRepository(c.env.DB),
+    sessionRepo,
   });
-
-  if (!info.ok) {
-    info.text().then(console.log);
-    return new Response(null, { status: 401 });
-  }
-
-  const { mail: mails, displayName: name } = (await info.json()) as {
-    mail: string;
-    displayName: string;
-  };
-
-  const parser = new UAParser(c.req.header("user-agent"));
-  const parserResults = parser.getResult();
-
-  const account = await getOrNewAccount(
-    new D1AccountRepository(c.env.DB),
-    mails,
-    name,
-  );
-  if (!account) {
-    return new Response(null, { status: 401 });
-  }
-  const clock: Clock = {
-    now: () => new Date(),
-  };
-  const newSession = Session.newSession(
-    clock,
-    account,
-    parserResults.device.type + parserResults.browser.name,
-  );
-  session.set("login", newSession);
-  return c.redirect(form.get("state"));
+  return c.redirect(redirectUrl);
 });
 
 export default app;
