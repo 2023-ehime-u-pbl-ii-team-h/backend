@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, MiddlewareHandler } from "hono";
 import { nanoid } from "nanoid";
 import { ID } from "./model/id";
 import { Account, Student, Teacher } from "./model/account";
@@ -35,7 +35,7 @@ app.use("*", (c, next) => {
     cookieOptions: {
       httpOnly: true,
     },
-  });
+  }) as unknown as MiddlewareHandler;
   return middleware(c, next);
 });
 
@@ -89,7 +89,6 @@ async function getOrNewAccount(
 }
 
 app.post("/login", async (c) => {
-  /*Microsoft Graphから情報をとってくる*/
   const token = c.req.header("Authorization");
   if (!token) {
     const option = { status: 401 };
@@ -107,8 +106,11 @@ app.post("/login", async (c) => {
     info.text().then(console.log);
     return new Response(null, { status: 401 });
   }
-  /*とってきた情報を使えるように形を変える*/
-  const { mail: mails, displayName: name } = await info.json();
+
+  const { mail: mails, displayName: name } = await info.json<{
+    mail: string;
+    displayName: string;
+  }>();
 
   /*デバイス名関連*/
   const parser = new UAParser(c.req.header("user-agent"));
