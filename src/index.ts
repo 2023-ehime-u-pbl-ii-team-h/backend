@@ -93,14 +93,7 @@ async function getOrNewAccount(
   };
 }
 
-interface PkceCodes {
-  challengeMethod: string;
-  verifier: string;
-  challenge: string;
-}
-
-const PKCE_CODES_KEY = "pkce_codes";
-const PKCE_CHALLENGE_METHOD = "S256";
+const PKCE_VERIFIER_KEY = "pkce_verifier";
 
 function encodeBase64Url(array: ArrayBuffer): string {
   const bytes = Array.from(new Uint8Array(array))
@@ -118,11 +111,7 @@ app.get("/login", async (c) => {
   );
   const challenge = encodeBase64Url(challengeArray);
 
-  c.get("session").set(PKCE_CODES_KEY, {
-    challengeMethod: PKCE_CHALLENGE_METHOD,
-    verifier,
-    challenge,
-  });
+  c.get("session").set(PKCE_VERIFIER_KEY, verifier);
 
   try {
     const authorizeUrl =
@@ -136,7 +125,7 @@ app.get("/login", async (c) => {
         scope: AZURE_APP_SCOPE,
         state: c.req.header("Referer") ?? "",
         code_challenge: challenge,
-        code_challenge_method: PKCE_CHALLENGE_METHOD,
+        code_challenge_method: "S256",
       });
     return c.redirect(authorizeUrl);
   } catch (error) {
@@ -147,8 +136,8 @@ app.get("/login", async (c) => {
 
 app.get("/redirect", async (c) => {
   const session = c.get("session");
-  const codes = session.get(PKCE_CODES_KEY) as PkceCodes;
-  session.set(PKCE_CODES_KEY, {});
+  const verifier = session.get(PKCE_VERIFIER_KEY) as string;
+  session.set(PKCE_VERIFIER_KEY, "");
 
   const res = await fetch(MICROSOFT_OAUTH_ROOT + "/token", {
     method: "POST",
@@ -161,7 +150,7 @@ app.get("/redirect", async (c) => {
       code: c.req.query("code"),
       redirect_uri: new URL("/redirect", c.req.url).toString(),
       grant_type: "authorization_code",
-      code_verifier: codes.verifier,
+      code_verifier: verifier,
       client_secret: c.env.AZURE_CLIENT_SECRET,
     }),
   });
