@@ -2,21 +2,22 @@ import { Hono } from "hono";
 import { nanoid } from 'nanoid'
 import { ID } from './model/id'
 import { Account, Student, Teacher } from "./model/account"
-import { poweredBy } from "hono/powered-by";
 import { Session, Clock } from "./model/session";
-import { sessionMiddleware, CookieStore, Session } from 'hono-sessions'
+import { sessionMiddleware, CookieStore, Session as HonoSession } from 'hono-sessions'
+import { UAParser } from "ua-parser-js";
 
 const MICROSOFT_GRAPH_API_ROOT = "https://graph.microsoft.com/v1.0";
 
 type Bindings = {
   DB: D1Database;
+  COOKIE_SECRET: string;
 };
 
 const app = new Hono<{
-  Bindings: Bindings
+  Bindings: Bindings,
   Variables: {
-    session: Session,
-    session_key_rotation: boolean
+    session: HonoSession,
+    session_key_rotation: boolean,
   }
 }>();
 
@@ -48,7 +49,7 @@ async function getOrNewAccount(db: D1Database, mails: string, name: string): Pro
     const isTeacher = /@(.+\.)?ehime-u\.ac\.jp$/.test(mails);
     if ( isStudent ){
       const newStudent: Student = {
-        account,
+        ...account,
         role: "STUDENT",
         enrolling: [],
       };
@@ -56,9 +57,9 @@ async function getOrNewAccount(db: D1Database, mails: string, name: string): Pro
     }
     else if ( isTeacher ){
       const newTeacher: Teacher = {
-        account,
+        ...account,
         role: "TEACHER",
-        enrolling: [],
+        assigned: [],
       };
       statement.bind(newTeacher.id, name, newTeacher.email, newTeacher.role);
     }
@@ -105,9 +106,9 @@ app.post("/login", async(c) => {
     return new Response(null, { status: 401 });
   }
   const clock: Clock = {
-    now: () => Date.now(),
+    now: () => new Date(),
   };
-  const newSession = Session.newSession(clock, account, parserResults.getDevice().type + parserResults.getBrouser().name);
+  const newSession = Session.newSession(clock, account, parserResults.device.type + parserResults.browser.name);
   c.get('session').set('login', newSession);
   return new Response();
 });
