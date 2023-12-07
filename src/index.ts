@@ -9,6 +9,7 @@ import {
   Session as HonoSession,
 } from "hono-sessions";
 import { UAParser } from "ua-parser-js";
+import { generatePkceKeys } from "./model/auth";
 
 const MICROSOFT_GRAPH_API_ROOT = "https://graph.microsoft.com/v1.0";
 const MICROSOFT_OAUTH_ROOT =
@@ -95,21 +96,8 @@ async function getOrNewAccount(
 
 const PKCE_VERIFIER_KEY = "pkce_verifier";
 
-function encodeBase64Url(array: ArrayBuffer): string {
-  const bytes = Array.from(new Uint8Array(array))
-    .map((byte) => String.fromCharCode(byte))
-    .reduce((str, digit) => str + digit, "");
-  return btoa(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-}
-
 app.get("/login", async (c) => {
-  const randomArray = crypto.getRandomValues(new Uint8Array(32));
-  const verifier = encodeBase64Url(randomArray);
-  const challengeArray = await crypto.subtle.digest(
-    { name: "SHA-256" },
-    new TextEncoder().encode(verifier),
-  );
-  const challenge = encodeBase64Url(challengeArray);
+  const { verifier, challenge } = await generatePkceKeys();
 
   c.get("session").set(PKCE_VERIFIER_KEY, verifier);
 
