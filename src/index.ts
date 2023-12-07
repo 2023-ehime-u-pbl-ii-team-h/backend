@@ -160,6 +160,7 @@ app.get("/redirect", async (c) => {
       scope: AZURE_APP_SCOPE,
       code: c.req.query("code"),
       redirect_uri: new URL("/redirect", c.req.url).toString(),
+      grant_type: "authorization_code",
       code_verifier: codes.verifier,
       client_secret: c.env.AZURE_CLIENT_SECRET,
     }),
