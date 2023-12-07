@@ -12,7 +12,7 @@ import { UAParser } from "ua-parser-js";
 
 const MICROSOFT_GRAPH_API_ROOT = "https://graph.microsoft.com/v1.0";
 const MICROSOFT_OAUTH_ROOT =
-  "https://login.microsoftonline.com/orginzations/oauth2/v2.0";
+  "https://login.microsoftonline.com/organizations/oauth2/v2.0";
 const AZURE_CLIENT_ID = "788aebee-7aa0-4286-b58c-7e35bf22e92a";
 const AZURE_APP_SCOPE = "https://graph.microsoft.com/user.read";
 
