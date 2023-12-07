@@ -107,7 +107,7 @@ app.get("/login", async (c) => {
   const verifier = encodeBase64Url(randomArray);
   const challengeArray = await crypto.subtle.digest(
     { name: "SHA-256" },
-    randomArray,
+    new TextEncoder().encode(verifier),
   );
   const challenge = encodeBase64Url(challengeArray);
 
