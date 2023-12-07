@@ -191,7 +191,7 @@ app.post("/redirect", async (c) => {
     parserResults.device.type + parserResults.browser.name,
   );
   session.set("login", newSession);
-  return new Response();
+  return c.redirect(form.get("state"));
 });
 
 export default app;
