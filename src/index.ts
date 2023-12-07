@@ -113,25 +113,20 @@ app.get("/login", async (c) => {
 
   c.get("session").set(PKCE_VERIFIER_KEY, verifier);
 
-  try {
-    const authorizeUrl =
-      MICROSOFT_OAUTH_ROOT +
-      "/authorize?" +
-      new URLSearchParams({
-        client_id: AZURE_CLIENT_ID,
-        response_type: "code",
-        redirect_uri: new URL("/redirect", c.req.url).toString(),
-        response_mode: "query",
-        scope: AZURE_APP_SCOPE,
-        state: c.req.header("Referer") ?? "",
-        code_challenge: challenge,
-        code_challenge_method: "S256",
-      });
-    return c.redirect(authorizeUrl);
-  } catch (error) {
-    console.dir(error);
-    return c.text("Internal Server Error", 500);
-  }
+  const authorizeUrl =
+    MICROSOFT_OAUTH_ROOT +
+    "/authorize?" +
+    new URLSearchParams({
+      client_id: AZURE_CLIENT_ID,
+      response_type: "code",
+      redirect_uri: new URL("/redirect", c.req.url).toString(),
+      response_mode: "query",
+      scope: AZURE_APP_SCOPE,
+      state: c.req.header("Referer") ?? "",
+      code_challenge: challenge,
+      code_challenge_method: "S256",
+    });
+  return c.redirect(authorizeUrl);
 });
 
 app.get("/redirect", async (c) => {
