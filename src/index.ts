@@ -147,7 +147,6 @@ app.post("/redirect", async (c) => {
       redirect_uri: new URL("/redirect", c.req.url).toString(),
       grant_type: "authorization_code",
       code_verifier: verifier,
-      client_secret: c.env.AZURE_CLIENT_SECRET,
     }),
   });
   if (!res.ok) {
