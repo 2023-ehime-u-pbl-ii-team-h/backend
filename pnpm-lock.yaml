@@ -8,9 +8,15 @@ dependencies:
   hono:
     specifier: ^3.7.6
     version: 3.7.6
+  hono-sessions:
+    specifier: ^0.3.3
+    version: 0.3.3
   nanoid:
     specifier: ^5.0.3
     version: 5.0.3
+  ua-parser-js:
+    specifier: ^1.0.37
+    version: 1.0.37
 
 devDependencies:
   '@cloudflare/workers-types':
@@ -19,6 +25,9 @@ devDependencies:
   '@types/jest':
     specifier: ^29.5.5
     version: 29.5.5
+  '@types/ua-parser-js':
+    specifier: ^0.7.39
+    version: 0.7.39
   esbuild:
     specifier: ^0.19.4
     version: 0.19.4
@@ -1420,6 +1429,10 @@ packages:
     resolution: {integrity: sha512-Hl219/BT5fLAaz6NDkSuhzasy49dwQS/DSdu4MdggFB8zcXv7vflBI3xp7FEmkmdDkBUI2bPUNeMttp2knYdxw==}
     dev: true
 
+  /@types/ua-parser-js@0.7.39:
+    resolution: {integrity: sha512-P/oDfpofrdtF5xw433SPALpdSchtJmY7nsJItf8h3KXqOslkbySh8zq4dSWXH2oTjRvJ5PczVEoCZPow6GicLg==}
+    dev: true
+
   /@types/yargs-parser@21.0.1:
     resolution: {integrity: sha512-axdPBuLuEJt0c4yI5OZssC19K2Mq1uKdrfZBzuxLvaztgqUtFYZUNw7lETExPYJR9jdEoIg4mb7RQKRQzOkeGQ==}
     dev: true
@@ -2464,6 +2477,19 @@ packages:
     engines: {node: '>= 0.4.0'}
     dev: true
 
+  /hono-sessions@0.3.3:
+    resolution: {integrity: sha512-yBvXYc8Zkwa2DPoJDfxekcD/8714IWCshhiRufpbuksVGJlBb9IZML/L52RsOQqCiDpYaGvWZ459Sbd1G1mZag==}
+    dependencies:
+      hono: 3.5.8
+      iron-webcrypto: 0.10.1
+      nanoid: 4.0.0
+    dev: false
+
+  /hono@3.5.8:
+    resolution: {integrity: sha512-ZipTmGfHm43q5QOEBGog2wyejyNUcicjPt0BLDQ8yz9xij/y9RYXRpR1YPxMpQqeyNM7isvpsIAe9Ems51Wq0Q==}
+    engines: {node: '>=16.0.0'}
+    dev: false
+
   /hono@3.7.6:
     resolution: {integrity: sha512-nuLNH9+nV6ojXK6b9I0RGZgdMuLTOXeQPs6xsIw/G5iyT8j8m7Nnx8pTxQprmSmCaEYIPv91rCcq45PQNfW68A==}
     engines: {node: '>=16.0.0'}
@@ -2515,6 +2541,10 @@ packages:
   /inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
     dev: true
+
+  /iron-webcrypto@0.10.1:
+    resolution: {integrity: sha512-QGOS8MRMnj/UiOa+aMIgfyHcvkhqNUsUxb1XzskENvbo+rEfp6TOwqd1KPuDzXC4OnGHcMSVxDGRoilqB8ViqA==}
+    dev: false
 
   /is-accessor-descriptor@0.1.6:
     resolution: {integrity: sha512-e1BM1qnDbMRG3ll2U9dSK0UMHuWOs3pY3AtcFsmvwPtKL3MML/Q86i+GilLfvqEs4GW+ExB91tQ3Ig9noDIZ+A==}
@@ -3464,6 +3494,12 @@ packages:
     hasBin: true
     dev: true
 
+  /nanoid@4.0.0:
+    resolution: {integrity: sha512-IgBP8piMxe/gf73RTQx7hmnhwz0aaEXYakvqZyE302IXW3HyVNhdNGC+O2MwMAVhLEnvXlvKtGbtJf6wvHihCg==}
+    engines: {node: ^14 || ^16 || >=18}
+    hasBin: true
+    dev: false
+
   /nanoid@5.0.3:
     resolution: {integrity: sha512-I7X2b22cxA4LIHXPSqbBCEQSL+1wv8TuoefejsX4HFWyC6jc5JG7CEaxOltiKjc1M+YCS2YkrZZcj4+dytw9GA==}
     engines: {node: ^18 || >=20}
@@ -4207,6 +4243,10 @@ packages:
     dependencies:
       is-typedarray: 1.0.0
     dev: true
+
+  /ua-parser-js@1.0.37:
+    resolution: {integrity: sha512-bhTyI94tZofjo+Dn8SN6Zv8nBDvyXTymAdM3LDI/0IboIUwTu1rEhW7v2TfiVsoYWgkQ4kOVqnI8APUFbIQIFQ==}
+    dev: false
 
   /undici-types@5.25.3:
     resolution: {integrity: sha512-Ga1jfYwRn7+cP9v8auvEXN1rX3sWqlayd4HP7OKk4mZWylEmu3KzXDUGrQUN6Ol7qo1gPvB2e5gX6udnyEPgdA==}
