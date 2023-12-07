@@ -120,7 +120,7 @@ app.get("/login", async (c) => {
       client_id: AZURE_CLIENT_ID,
       response_type: "code",
       redirect_uri: new URL("/redirect", c.req.url).toString(),
-      response_mode: "query",
+      response_mode: "form_post",
       scope: AZURE_APP_SCOPE,
       state: c.req.header("Referer") ?? "",
       code_challenge: challenge,
@@ -129,7 +129,8 @@ app.get("/login", async (c) => {
   return c.redirect(authorizeUrl);
 });
 
-app.get("/redirect", async (c) => {
+app.post("/redirect", async (c) => {
+  const form = await c.req.formData();
   const session = c.get("session");
   const verifier = session.get(PKCE_VERIFIER_KEY) as string;
   session.set(PKCE_VERIFIER_KEY, "");
@@ -142,7 +143,7 @@ app.get("/redirect", async (c) => {
     body: new URLSearchParams({
       client_id: AZURE_CLIENT_ID,
       scope: AZURE_APP_SCOPE,
-      code: c.req.query("code"),
+      code: form.get("code"),
       redirect_uri: new URL("/redirect", c.req.url).toString(),
       grant_type: "authorization_code",
       code_verifier: verifier,
