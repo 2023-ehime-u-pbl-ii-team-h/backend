@@ -19,7 +19,6 @@ const AZURE_APP_SCOPE = "https://graph.microsoft.com/user.read";
 type Bindings = {
   DB: D1Database;
   COOKIE_SECRET: string;
-  AZURE_CLIENT_SECRET: string;
 };
 
 const app = new Hono<{
@@ -146,7 +145,6 @@ app.get("/redirect", async (c) => {
       redirect_uri: new URL("/redirect", c.req.url).toString(),
       grant_type: "authorization_code",
       code_verifier: verifier,
-      client_secret: c.env.AZURE_CLIENT_SECRET,
     }),
   });
   if (!res.ok) {
