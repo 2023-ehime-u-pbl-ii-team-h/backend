@@ -139,6 +139,7 @@ app.post("/redirect", async (c) => {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
+      Origin: "",
     },
     body: new URLSearchParams({
       client_id: AZURE_CLIENT_ID,
