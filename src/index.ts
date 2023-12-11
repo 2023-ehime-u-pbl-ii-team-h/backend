@@ -71,4 +71,10 @@ app.post(REDIRECT_API_PATH, async (c) => {
   return c.redirect(redirectUrl);
 });
 
+app.post("/logout", async(c) => {
+  const cookie = c.req.header("Cookie");
+  c.get('session').deleteSession();
+  return new Response();
+});
+
 export default app;
