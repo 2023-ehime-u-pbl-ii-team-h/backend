@@ -71,8 +71,8 @@ app.post(REDIRECT_API_PATH, async (c) => {
   return c.redirect(redirectUrl);
 });
 
-app.post("/logout", async(c) => {
-  c.get('session').deleteSession();
+app.post("/logout", async (c) => {
+  c.get("session").deleteSession();
   return new Response();
 });
 
