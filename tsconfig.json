@@ -1,6 +1,9 @@
 {
   "compilerOptions": {
     "lib": ["ES2020"],
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Node",
     "types": ["@cloudflare/workers-types"]
   }
 }
