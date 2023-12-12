@@ -11,9 +11,9 @@ import { MicrosoftOAuth } from "./adaptor/microsoft-oauth";
 import { D1AccountRepository } from "./adaptor/account";
 import { Session } from "./model/session";
 import { ID } from "./model/id";
-import { Subject } from "./model/subject";
-import { nanoid } from "nanoid";
 import { Teacher } from "./model/account";
+import { newSubject } from "./service/new-subject";
+import { D1SubjectRepository } from "./adaptor/subject";
 
 type Bindings = {
   DB: D1Database;
@@ -105,40 +105,19 @@ app.post("/subjects", async (c) => {
     return c.text("Bad Request", 400);
   }
 
-  const assigneesSet = new Set(body.assignees);
-  if (!assigneesSet.has(login.account.id as ID<Teacher>)) {
-    return c.text("Bad Request", 400);
-  }
-
-  const assignees = [...assigneesSet.values()];
-  const statement = c.env.DB.prepare("SELECT * FROM account WHERE id = ?");
-  const rows = await c.env.DB.batch(assignees.map((id) => statement.bind(id)));
-  if (!rows.every((row) => row.results.length === 1)) {
-    return c.text("Bad Request", 400);
-  }
-
-  const newSubjectID = nanoid() as ID<Subject>;
-  const insertCharge = c.env.DB.prepare(
-    "INSERT INTO charge (id, teacher_id, subject_id) VALUES (?, ?, ?)",
-  );
-  await c.env.DB.batch(
-    [
-      c.env.DB.prepare("INSERT INTO subject (id, name) VALUES (?, ?)").bind(
-        newSubjectID,
-        body.name,
-      ),
-    ].concat(
-      assignees.map((assignee) =>
-        insertCharge.bind(nanoid(), assignee, newSubjectID),
-      ),
-    ),
-  );
-
-  return c.json({
-    id: newSubjectID,
-    name: body.name,
-    assignees,
+  const ret = await newSubject({
+    session: login,
+    params: {
+      name: body.name,
+      assignees: body.assignees,
+    },
+    query: new D1AccountRepository(c.env.DB),
+    repo: new D1SubjectRepository(c.env.DB),
   });
+  if (ret === null) {
+    return c.text("Bad Request", 400);
+  }
+  return c.json(ret);
 });
 
 export default app;
