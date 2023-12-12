@@ -19,6 +19,9 @@ export class Subject {
     if (!(0 <= firstIndex && firstIndex < this.boards.length)) {
       throw new Error("`firstIndex` out of range");
     }
+    if (!Number.isInteger(days)) {
+      throw new Error("`days` is not an integer");
+    }
     const newBoards = structuredClone(this.boards);
     for (const board of newBoards.slice(
       firstIndex,
