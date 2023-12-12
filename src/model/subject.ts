@@ -22,12 +22,14 @@ export class Subject {
     if (!Number.isInteger(days)) {
       throw new Error("`days` is not an integer");
     }
+    if (lastIndex === undefined) {
+      lastIndex = this.boards.length - 1;
+    }
     const newBoards = structuredClone(this.boards);
-    for (const board of newBoards.slice(
-      firstIndex,
-      lastIndex === undefined ? lastIndex + 1 : undefined,
-    )) {
-      board.startFrom.setUTCDate(board.startFrom.getUTCDate() + days);
+    for (let i = firstIndex; i <= lastIndex; ++i) {
+      newBoards[i].startFrom.setUTCDate(
+        newBoards[i].startFrom.getUTCDate() + days,
+      );
     }
     return new Subject(
       this.id,
