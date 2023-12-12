@@ -25,7 +25,7 @@ export class Subject {
     const newBoards = structuredClone(this.boards);
     for (const board of newBoards.slice(
       firstIndex,
-      lastIndex ? lastIndex + 1 : undefined,
+      lastIndex === undefined ? lastIndex + 1 : undefined,
     )) {
       board.startFrom.setUTCDate(board.startFrom.getUTCDate() + days);
     }
