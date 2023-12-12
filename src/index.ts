@@ -84,7 +84,13 @@ app.post("/logout", async (c) => {
 app.post("/subjects", async (c) => {
   const session = c.get("session");
   const login = session.get("login") as Session;
-  const body: unknown = await c.req.json();
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch (error) {
+    c.req.text().then(console.log);
+    return c.text("Bad Request", 400);
+  }
 
   if (!(typeof body === "object" && "name" in body && "assignees" in body)) {
     return c.text("Bad Request", 400);
