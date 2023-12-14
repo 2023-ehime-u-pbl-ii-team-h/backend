@@ -1,4 +1,5 @@
 import { ID } from "./id";
+import { Subject } from "./subject";
 
 export type Account = {
   readonly id: ID<Account>;

@@ -62,10 +62,10 @@ app.post(REDIRECT_API_PATH, async (c) => {
   const sessionRepo = new HonoSessionRepository(session);
   const redirectUrl = await loginRedirect({
     query: {
-      code: form.get("code"),
+      code: form.get("code") ?? "",
       requestUrl: c.req.url,
-      userAgent: c.req.header("user-agent"),
-      returnUrl: form.get("state"),
+      userAgent: c.req.header("user-agent") ?? "",
+      returnUrl: form.get("state") ?? "",
     },
     accessTokenService: new MicrosoftOAuth(),
     verifierRepo: sessionRepo,
@@ -92,7 +92,14 @@ app.post("/subjects", async (c) => {
     return c.text("Bad Request", 400);
   }
 
-  if (!(typeof body === "object" && "name" in body && "assignees" in body)) {
+  if (
+    !(
+      typeof body === "object" &&
+      body !== null &&
+      "name" in body &&
+      "assignees" in body
+    )
+  ) {
     return c.text("Bad Request", 400);
   }
   if (typeof body.name !== "string" || body.name === "") {
