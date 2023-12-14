@@ -8,11 +8,15 @@ export class D1AccountRepository
 {
   constructor(private readonly db: D1Database) {}
 
-  getAccount(email: string): Promise<Account> {
-    return this.db
+  async getAccount(email: string): Promise<Account> {
+    const entry = await this.db
       .prepare("SELECT * FROM account WHERE email = ?")
       .bind(email)
       .first();
+    if (!entry) {
+      throw new Error(`account having email ${email} not found`);
+    }
+    return entry as Account;
   }
 
   async existsAll(...ids: ID<Account>[]): Promise<boolean> {

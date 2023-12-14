@@ -106,7 +106,7 @@ export async function loginRedirect({
   const newSession = Session.newSession(
     clock,
     account,
-    parserResults.device.type + parserResults.browser.name,
+    parserResults.device.type ?? "" + parserResults.browser.name ?? "",
   );
   sessionRepo.createLoginSession(newSession);
   return query.returnUrl;
