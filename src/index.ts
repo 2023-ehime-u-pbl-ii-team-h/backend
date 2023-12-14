@@ -80,7 +80,7 @@ app.post("/logout", async(c) => {
 app.post("/attendance", async(c) => {
   /*ネットワークの確認を行う*/
   const allowPattern = new RegExp(c.env.ALLOW_IP_REGEX);
-  if ( !allowPattern.test(c.req.header("cf-connectiong-ip") as string) ) {
+  if ( !allowPattern.test(c.req.header("cf-connectiong-ip") ?? "") ) { //"??":c.req.header(cf-connectiong-ip")でnullが返ってきたときに""として扱う演算子
     return c.text("Forbidden", 403);
   }
 
@@ -90,53 +90,43 @@ app.post("/attendance", async(c) => {
   if ( !session ){
     return c.text("Unauthorized", 401);
   }
+
+  /*まとめてクエリを実行する*/
+  const { existResult, accountEntry, attendance_boardResult } = await c.env.DB.batch([
+    c.env.DB.prepare("SELECT * FROM session WHERE id = ?").bind(session.id),
+    c.env.DB.prepare("SELECT * FROM account WHERE role = 'STUDENT' AND id = ?").bind(session.account_id),
+    c.env.DB.prepare("SELECT id FROM attendance_board WHERE ? BETWEEN start_from AND seconds_from_be_late_to_end").bind(new Date())
+  ])
   //session情報がsessionテーブルにある確認
-  const existResult = await c.env.DB
-  .prepare("SELECT * FROM session WHERE id = ?")
-  .bind(session['id'])
-  .first();
-  const isExist = existResult == null;
-  if ( isExist ){
+  const exists = existResult !== null;
+  if ( !exists ){
     return c.text("Unauthorized", 401);
   }
   //roleが学生か確認
-  const isStudent = await c.env.DB
-  .prepare("SELECT * FROM account WHERE role = STUDENT AND id = ?")
-  .bind(session['account_id'])
-  .first();
-  if ( isStudent ){
+  const isStudent = accountEntry !== null;
+  if (!isStudent) {
     return c.text("Unauthorized", 401);
   }
 
   /*出席申請受付が開始されている科目をDBから探す、存在しなければ404を返す*/
-  const now = new Date();
-  const attendance_boardResult = await c.env.DB
-  .prepare("SELECT id FROM attendance_board WHERE ? BETWEEN start_from AND seconds_from_be_late_to_end")
-  .bind(now)
-  .first();
   const isSubjectNone = attendance_boardResult == null;
   if ( isSubjectNone ){
     return c.text("Not Found", 404);
   }
 
+  /*まとめてクエリを実行する*/
+  const { attendResult, request } = await c.env.DB.batch([
+    c.env.DB.prepare("SELECT * FROM attendance WHERE where = ?").bind(attendance_boardResult),
+    c.env.DB.prepare("INSERT INTO attendance (id, create_at, who, where) VALUES (?1, ?2, ?3, ?4)").bind(nanoid(), new Date(), session.account_id, attendance_boardResult)
+  ])
   /*打刻を行う*/
   //既に出席申請されていないか確認する
-  const attendResult = await c.env.DB
-  .prepare("SELECT * FROM attendance WHERE where = ?")
-  .bind(attendance_boardResult)
-  .first();
   const existAttendance = attendResult != null;
   if ( existAttendance ){
     return c.text("Unprocessable Entity", 422);
   }
   //打刻を行う
-  const attendanceId = nanoid();
-  const reqest = await c.env.DB
-  .prepare("INSERT INTO attendance (id, create_at, who, where) VALUES (?1, ?2, ?3, ?4)")
-  .bind(attendanceId, now, session['account_id'], attendance_boardResult)
-  .run();
-
-  if (!reqest.success) {
+  if (!request.success) {
     throw new Error("failed to attend");
   }
 
