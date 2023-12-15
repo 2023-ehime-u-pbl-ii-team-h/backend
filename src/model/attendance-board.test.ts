@@ -31,8 +31,6 @@ if (currentMs < beLateMs){
 if (currentMs < endMs){
     return "BE_LATE";
 }
-if(endMs < currentMs){
     return "CLOSED";
-}
 
 }
