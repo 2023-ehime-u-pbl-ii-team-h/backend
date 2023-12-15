@@ -24,15 +24,14 @@ export function determineState(board: AttendanceBoard, toAttendAt: Date): Attend
 
 if (currentMs < toAttendAt.getTime()) {
     return "TOO_EARLY";
-} else if(currentMs == toAttendAt.getTime()){
+} 
+if (currentMs < beLateMs){
     return "ATTENDED";
-}else if(toAttendAt.getTime() < currentMs && currentMs < beLateMs){
-    return "ATTENDED";
-}else if(currentMs == beLateMs){
+}
+if (currentMs < endMs){
     return "BE_LATE";
-}else if(beLateMs < currentMs && currentMs < endMs){
-    return "BE_LATE";
-}else if(endMs <= currentMs){
+}
+if(endMs < currentMs){
     return "CLOSED";
 }
 
