@@ -1,6 +1,7 @@
 import { ID } from "./id";
+import { Subject } from "./subject";
 
-type AttendanceBoard = {
+export type AttendanceBoard = {
     readonly id: ID<AttendanceBoard>;
     readonly subject: ID<Subject>;
     readonly startFrom: Date;
@@ -8,30 +9,30 @@ type AttendanceBoard = {
     readonly secondsFromBeLateToEnd: number;
 };
 
-type AttendanceState = 
+export type AttendanceState = 
     | "TOO_EARLY"
     | "ATTENDED"
     | "BE_LATE"
     | "CLOSED"
 ;
 
-function determineState(board: AttendanceBoard, toAttendAt: Date): AttendanceState {
+export function determineState(board: AttendanceBoard, toAttendAt: Date): AttendanceState {
        
-const currentDateTime = new Date(); // 現在の日時を取得
-const Attendtime = new Date(toAttendAt.getTime() + board.secondsFromStartToBeLate * 1000);//出席と認められる時間
-const Latetime = new Date(toAttendAt.getTime() + board.secondsFromStartToBeLate * 1000 + board.secondsFromBeLateToEnd * 1000);//遅刻と認められる時間
+    const currentMs = Date.now(); // 現在の日時を取得
+    const beLateMs = toAttendAt.getTime() + board.secondsFromStartToBeLate * 1000;;//出席扱いの時間
+    const endMs = toAttendAt.getTime() + board.secondsFromStartToBeLate * 1000 + board.secondsFromBeLateToEnd * 1000;//遅刻扱いの時間
 
-if (currentDateTime < toAttendAt) {
+if (currentMs < toAttendAt.getTime()) {
     return "TOO_EARLY";
-} else if(currentDateTime == toAttendAt){
+} else if(currentMs == toAttendAt.getTime()){
     return "ATTENDED";
-}else if(toAttendAt < currentDateTime && currentDateTime < Attendtime){
+}else if(toAttendAt.getTime() < currentMs && currentMs < beLateMs){
     return "ATTENDED";
-}else if(currentDateTime == Attendtime){
+}else if(currentMs == beLateMs){
     return "BE_LATE";
-}else if(Attendtime < currentDateTime && currentDateTime < Latetime){
+}else if(beLateMs < currentMs && currentMs < endMs){
     return "BE_LATE";
-}else if(Latetime <= currentDateTime){
+}else if(endMs <= currentMs){
     return "CLOSED";
 }
 
