@@ -117,7 +117,7 @@ app.post("/attendance", async(c) => {
 
   /*まとめてクエリを実行する*/
   const [ attendResult, request ] = await c.env.DB.batch([
-    c.env.DB.prepare("SELECT * FROM attendance WHERE 'where' = ?").bind(attendanceBoardEntry),
+    c.env.DB.prepare("SELECT * FROM attendance WHERE \"where\" = ?").bind(attendanceBoardEntry),
     c.env.DB.prepare("INSERT INTO attendance (id, create_at, who, where) VALUES (?1, ?2, ?3, ?4)").bind(nanoid(), new Date(), session.account_id, attendanceBoardEntry)
   ])
   /*打刻を行う*/
