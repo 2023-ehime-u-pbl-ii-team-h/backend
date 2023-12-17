@@ -119,18 +119,20 @@ app.post("/attendance", async(c) => {
   }
 
   /*クエリを実行する*/
-  const [ attendResult ] = await c.env.DB.batch([
-    c.env.DB.prepare("SELECT * FROM attendance WHERE \"where\" = ?").bind(attendanceBoardEntry.result[0])
-  ])
+  const attendEntry = await c.env.DB
+  .prepare("SELECT * FROM attendance WHERE who ?1 AND \"where\" = ?2")
+  .bind(session.account.id, attendanceBoardEntry.results[0])
+  .first();
+
   /*打刻を行う*/
   //既に出席申請されていないか確認する
-  const existAttendance = attendResult.result.length !== 0;
-  if ( existAttendance ){
+  if ( attendEntry !== null ){
     return c.text("Unprocessable Entity", 422);
   }
   //打刻を行う
-  const request = c.env.DB.prepare("INSERT INTO attendance (id, create_at, who, \"where\") VALUES (?1, ?2, ?3, ?4)")
-  .bind(nanoid(), now, session.account.id, attendanceBoardEntry)
+  const request = await c.env.DB
+  .prepare("INSERT INTO attendance (id, create_at, who, \"where\") VALUES (?1, ?2, ?3, ?4)")
+  .bind(nanoid(), now, session.account.id, attendanceBoardEntry.results[0])
   .run();
   if (!request.success) {
     throw new Error("failed to attend");
