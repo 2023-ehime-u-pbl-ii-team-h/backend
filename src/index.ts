@@ -10,11 +10,13 @@ import { MicrosoftGraph } from "./adaptor/microsoft-graph";
 import { MicrosoftOAuth } from "./adaptor/microsoft-oauth";
 import { D1AccountRepository } from "./adaptor/account";
 import { nanoid } from "nanoid";
+import { Session } from "./model/session";
 
 type Bindings = {
   DB: D1Database;
   COOKIE_SECRET: string;
   AZURE_CLIENT_SECRET: string;
+  ALLOW_IP_REGEX: string;
 };
 
 const app = new Hono<{
@@ -86,7 +88,8 @@ app.post("/attendance", async(c) => {
 
   /*学生の認証を行う*/
   //sessionがcookieあるか確認
-  const session = c.get("session");
+  const honoSession = c.get('session');
+  const session = honoSession.get("login") as Session | null;
   if ( !session ){
     return c.text("Unauthorized", 401);
   }
@@ -95,30 +98,30 @@ app.post("/attendance", async(c) => {
   const now = new Date();
   const [ existResult, accountEntry, attendanceBoardEntry ] = await c.env.DB.batch([
     c.env.DB.prepare("SELECT * FROM session WHERE id = ?").bind(session.id),
-    c.env.DB.prepare("SELECT * FROM account WHERE role = 'STUDENT' AND id = ?").bind(session.account_id),
+    c.env.DB.prepare("SELECT * FROM account WHERE role = 'STUDENT' AND id = ?").bind(session.account.id),
     c.env.DB.prepare("SELECT id FROM attendance_board WHERE start_from  <= ?1 AND seconds_from_be_late_to_end >= ?2").bind(now, now),
   ]);
-  //session情報がsessionテーブルにある確認
-  const exists = existResult !== null;
-  if ( !exists ){
+  //session情報がsessionテーブルにあるか確認
+  const existsSession = existResult.results.length === 1;
+  if ( !existsSession ){
     return c.text("Unauthorized", 401);
   }
   //roleが学生か確認
-  const isStudent = accountEntry !== null;
+  const isStudent = accountEntry.results.length === 1;
   if (!isStudent) {
     return c.text("Unauthorized", 401);
   }
 
   /*出席申請受付が開始されている科目をDBから探す、存在しなければ404を返す*/
-  const isSubjectNone = attendanceBoardEntry == null;
-  if ( isSubjectNone ){
+  const isOpenBoard = attendanceBoardEntry.result.length === 1;
+  if ( !isOpenBoard ){
     return c.text("Not Found", 404);
   }
 
   /*まとめてクエリを実行する*/
   const [ attendResult, request ] = await c.env.DB.batch([
     c.env.DB.prepare("SELECT * FROM attendance WHERE \"where\" = ?").bind(attendanceBoardEntry),
-    c.env.DB.prepare("INSERT INTO attendance (id, create_at, who, \"where\") VALUES (?1, ?2, ?3, ?4)").bind(nanoid(), new Date(), session.account_id, attendanceBoardEntry)
+    c.env.DB.prepare("INSERT INTO attendance (id, create_at, who, \"where\") VALUES (?1, ?2, ?3, ?4)").bind(nanoid(), now, session.account.id, attendanceBoardEntry)
   ])
   /*打刻を行う*/
   //既に出席申請されていないか確認する
