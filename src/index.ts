@@ -92,11 +92,12 @@ app.post("/attendance", async(c) => {
   }
 
   /*まとめてクエリを実行する*/
-  const { existResult, accountEntry, attendance_boardResult } = await c.env.DB.batch([
+  const now = new Date();
+  const [ existResult, accountEntry, attendanceBoardEntry ] = await c.env.DB.batch([
     c.env.DB.prepare("SELECT * FROM session WHERE id = ?").bind(session.id),
     c.env.DB.prepare("SELECT * FROM account WHERE role = 'STUDENT' AND id = ?").bind(session.account_id),
-    c.env.DB.prepare("SELECT id FROM attendance_board WHERE ? BETWEEN start_from AND seconds_from_be_late_to_end").bind(new Date())
-  ])
+    c.env.DB.prepare("SELECT id FROM attendance_board WHERE start_from  <= ?1 AND seconds_from_be_late_to_end >= ?2").bind(now, now),
+  ]);
   //session情報がsessionテーブルにある確認
   const exists = existResult !== null;
   if ( !exists ){
@@ -109,15 +110,15 @@ app.post("/attendance", async(c) => {
   }
 
   /*出席申請受付が開始されている科目をDBから探す、存在しなければ404を返す*/
-  const isSubjectNone = attendance_boardResult == null;
+  const isSubjectNone = attendanceBoardEntry == null;
   if ( isSubjectNone ){
     return c.text("Not Found", 404);
   }
 
   /*まとめてクエリを実行する*/
-  const { attendResult, request } = await c.env.DB.batch([
-    c.env.DB.prepare("SELECT * FROM attendance WHERE where = ?").bind(attendance_boardResult),
-    c.env.DB.prepare("INSERT INTO attendance (id, create_at, who, where) VALUES (?1, ?2, ?3, ?4)").bind(nanoid(), new Date(), session.account_id, attendance_boardResult)
+  const [ attendResult, request ] = await c.env.DB.batch([
+    c.env.DB.prepare("SELECT * FROM attendance WHERE 'where' = ?").bind(attendanceBoardEntry),
+    c.env.DB.prepare("INSERT INTO attendance (id, create_at, who, where) VALUES (?1, ?2, ?3, ?4)").bind(nanoid(), new Date(), session.account_id, attendanceBoardEntry)
   ])
   /*打刻を行う*/
   //既に出席申請されていないか確認する
