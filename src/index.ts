@@ -99,7 +99,7 @@ app.post("/attendance", async(c) => {
   const [ existResult, accountEntry, attendanceBoardEntry ] = await c.env.DB.batch([
     c.env.DB.prepare("SELECT * FROM session WHERE id = ?").bind(session.id),
     c.env.DB.prepare("SELECT * FROM account WHERE role = 'STUDENT' AND id = ?").bind(session.account.id),
-    c.env.DB.prepare("SELECT id FROM attendance_board WHERE start_from  <= ?1 AND seconds_from_be_late_to_end >= ?2").bind(now, now),
+    c.env.DB.prepare("SELECT id FROM attendance_board WHERE start_from  <= ?1 AND seconds_from_be_late_to_end >= ?1").bind(now),
   ]);
   //session情報がsessionテーブルにあるか確認
   const existsSession = existResult.results.length === 1;
@@ -118,18 +118,20 @@ app.post("/attendance", async(c) => {
     return c.text("Not Found", 404);
   }
 
-  /*まとめてクエリを実行する*/
-  const [ attendResult, request ] = await c.env.DB.batch([
-    c.env.DB.prepare("SELECT * FROM attendance WHERE \"where\" = ?").bind(attendanceBoardEntry),
-    c.env.DB.prepare("INSERT INTO attendance (id, create_at, who, \"where\") VALUES (?1, ?2, ?3, ?4)").bind(nanoid(), now, session.account.id, attendanceBoardEntry)
+  /*クエリを実行する*/
+  const [ attendResult ] = await c.env.DB.batch([
+    c.env.DB.prepare("SELECT * FROM attendance WHERE \"where\" = ?").bind(attendanceBoardEntry.result[0])
   ])
   /*打刻を行う*/
   //既に出席申請されていないか確認する
-  const existAttendance = attendResult != null;
+  const existAttendance = attendResult.result.length !== 0;
   if ( existAttendance ){
     return c.text("Unprocessable Entity", 422);
   }
   //打刻を行う
+  const request = c.env.DB.prepare("INSERT INTO attendance (id, create_at, who, \"where\") VALUES (?1, ?2, ?3, ?4)")
+  .bind(nanoid(), now, session.account.id, attendanceBoardEntry)
+  .run();
   if (!request.success) {
     throw new Error("failed to attend");
   }
