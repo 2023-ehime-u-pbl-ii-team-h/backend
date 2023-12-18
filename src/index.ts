@@ -95,11 +95,23 @@ app.post("/attendance", async(c) => {
   }
 
   /*まとめてクエリを実行する*/
-  const now = new Date();
+  const now = Math.floor(Date.now() / 1000);
   const [ existResult, accountEntry, attendanceBoardEntry ] = await c.env.DB.batch([
     c.env.DB.prepare("SELECT * FROM session WHERE id = ?").bind(session.id),
     c.env.DB.prepare("SELECT * FROM account WHERE role = 'STUDENT' AND id = ?").bind(session.account.id),
-    c.env.DB.prepare("SELECT id FROM attendance_board WHERE start_from  <= ?1 AND seconds_from_be_late_to_end >= ?1").bind(now),
+    c.env.DB.prepare(
+      `
+        SELECT id
+        FROM attendance_board
+        WHERE start_from  <= ?1
+          AND ?1 <= start_from + seconds_from_be_late_to_end
+          AND id IN (
+            SELECT subject_id
+            FROM registration
+            WHERE student_id = ?2
+          )
+      `,
+    ).bind(now, session.account.id),
   ]);
   //session情報がsessionテーブルにあるか確認
   const existsSession = existResult.results.length === 1;
@@ -113,7 +125,7 @@ app.post("/attendance", async(c) => {
   }
 
   /*出席申請受付が開始されている科目をDBから探す、存在しなければ404を返す*/
-  const isOpenBoard = attendanceBoardEntry.result.length === 1;
+  const isOpenBoard = attendanceBoardEntry.results.length === 1;
   if ( !isOpenBoard ){
     return c.text("Not Found", 404);
   }
