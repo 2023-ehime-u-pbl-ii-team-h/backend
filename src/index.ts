@@ -15,6 +15,7 @@ import { ID } from "./model/id";
 import { Teacher } from "./model/account";
 import { newSubject } from "./service/new-subject";
 import { D1SubjectRepository } from "./adaptor/subject";
+import { AttendanceBoard, AttendanceState, determineState } from "./model/attendance-board";
 
 type Bindings = {
   DB: D1Database;
@@ -207,6 +208,77 @@ app.post("/attendance", async (c) => {
   }
 
   return new Response();
+});
+
+app.get("/attendance/:course_id", async(c) => {
+  const subjectID = c.req.param('course_id');
+  const honoSession = c.get('session');
+  const session = honoSession.get("login") as Session | null;
+  if ( !session ){
+    return c.text("Unauthorized", 401);
+  }
+
+  const [subjectResult, registration] = c.env.DB.batch([
+    c.env.DB.prepare("SELECT id FROM subjet WHERE id = ?").bind(subjectID),
+    c.env.DB.prepare("SELECT * registration WHERE subject_id = ?1 AND student_id = ?2").bind(subjectID, session.account.id)
+  ])
+  const subjectExists = subjectResult.results.length === 1;
+  const isRegistration = registration.results.length === 1;
+  if ( !subjectExists ){
+    return c.text("Not Found", 404);
+  }
+  if ( !isRegistration ){
+    return c.text("Not Found", 404);
+  }
+  /*DBから出席情報を取り出す*/
+  const attendance = await c.env.DB
+  .prepare("SELECT * FROM attendance WHERE who = ?")
+  .bind(session.account.id)
+  .all();
+
+  /*type AttendanceBoardを作る前準備*/
+  //すべての出席を取り出す
+  const allAttendanceBoard = await c.env.DB
+  .prepare("SELECT * FROM attendance_board WHERE subject_id = ?")
+  .bind(subjectID)
+  .all();
+  if ( !allAttendanceBoard ){
+    return c.text("Not Found", 404);
+  }
+  const attendanceBoard: AttendanceBoard[] = new Array(16);
+  for ( let i = 0; i < allAttendanceBoard.length; i++ ){
+    attendanceBoard[i]= {
+      id: allAttendanceBoard[i].id,
+      subject: allAttendanceBoard[i].subject_id,
+      startFrom: allAttendanceBoard[i].start_from,
+      secondsFromStartToBeLate: allAttendanceBoard[i].seconds_from_be_late,
+      secondsFromBeLateToEnd: allAttendanceBoard[i].seconds_from_be_late_to_end
+    }
+  }
+  /*加工する*/
+  const attendanceResult: AttendanceState[] = new Array(16);
+  let on_time, late, miss = 0;
+  for ( let i = 0; i < attendanceBoard.length; i++ ){
+    attendanceResult[i] = determineState(attendanceBoard[i], attendance.create_at)
+    switch ( attendanceResult[i] ){
+      case "ATTENDED":
+        on_time++;
+        break;
+      case "BE_LATE":
+        late++;
+        break;
+      case "CLOSED":
+        miss++;
+        break;
+    }
+  }
+
+  /*JSON形式で返す*/
+  return c.json({
+    on_time: on_time,
+    late: late,
+    miss: miss
+  });
 });
 
 export default app;
