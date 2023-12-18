@@ -10,6 +10,7 @@ import { MicrosoftGraph } from "./adaptor/microsoft-graph";
 import { MicrosoftOAuth } from "./adaptor/microsoft-oauth";
 import { D1AccountRepository } from "./adaptor/account";
 import { Session } from "./model/session";
+import { nanoid } from "nanoid";
 import { ID } from "./model/id";
 import { Teacher } from "./model/account";
 import { newSubject } from "./service/new-subject";
@@ -19,6 +20,7 @@ type Bindings = {
   DB: D1Database;
   COOKIE_SECRET: string;
   AZURE_CLIENT_SECRET: string;
+  ALLOW_IP_REGEX: string;
 };
 
 const app = new Hono<{
@@ -131,6 +133,80 @@ app.post("/subjects", async (c) => {
     return c.text("Bad Request", 400);
   }
   return c.json(ret);
+});
+
+app.post("/attendance", async (c) => {
+  /*ネットワークの確認を行う*/
+  const allowPattern = new RegExp(c.env.ALLOW_IP_REGEX);
+  if ( !allowPattern.test(c.req.header("cf-connectiong-ip") ?? "") ) { //"??":c.req.header(cf-connectiong-ip")でnullが返ってきたときに""として扱う演算子
+    return c.text("Forbidden", 403);
+  }
+
+  /*学生の認証を行う*/
+  //sessionがcookieあるか確認
+  const honoSession = c.get('session');
+  const session = honoSession.get("login") as Session | null;
+  if ( !session ){
+    return c.text("Unauthorized", 401);
+  }
+
+  /*まとめてクエリを実行する*/
+  const now = Math.floor(Date.now() / 1000);
+  const [ existResult, accountEntry, attendanceBoardEntry ] = await c.env.DB.batch([
+    c.env.DB.prepare("SELECT * FROM session WHERE id = ?").bind(session.id),
+    c.env.DB.prepare("SELECT * FROM account WHERE role = 'STUDENT' AND id = ?").bind(session.account.id),
+    c.env.DB.prepare(
+      `
+        SELECT id
+        FROM attendance_board
+        WHERE start_from  <= ?1
+          AND ?1 <= start_from + seconds_from_be_late_to_end
+          AND subject_id IN (
+            SELECT subject_id
+            FROM registration
+            WHERE student_id = ?2
+          )
+      `,
+    ).bind(now, session.account.id),
+  ]);
+  //session情報がsessionテーブルにあるか確認
+  const existsSession = existResult.results.length === 1;
+  if ( !existsSession ){
+    return c.text("Unauthorized", 401);
+  }
+  //roleが学生か確認
+  const isStudent = accountEntry.results.length === 1;
+  if (!isStudent) {
+    return c.text("Unauthorized", 401);
+  }
+
+  /*出席申請受付が開始されている科目をDBから探す、存在しなければ404を返す*/
+  const isOpenBoard = attendanceBoardEntry.results.length === 1;
+  if ( !isOpenBoard ){
+    return c.text("Not Found", 404);
+  }
+
+  /*クエリを実行する*/
+  const attendEntry = await c.env.DB
+  .prepare("SELECT * FROM attendance WHERE who ?1 AND \"where\" = ?2")
+  .bind(session.account.id, attendanceBoardEntry.results[0])
+  .first();
+
+  /*打刻を行う*/
+  //既に出席申請されていないか確認する
+  if ( attendEntry !== null ){
+    return c.text("Unprocessable Entity", 422);
+  }
+  //打刻を行う
+  const request = await c.env.DB
+  .prepare("INSERT INTO attendance (id, create_at, who, \"where\") VALUES (?1, ?2, ?3, ?4)")
+  .bind(nanoid(), now, session.account.id, attendanceBoardEntry.results[0])
+  .run();
+  if (!request.success) {
+    throw new Error("failed to attend");
+  }
+
+  return new Response();
 });
 
 export default app;
