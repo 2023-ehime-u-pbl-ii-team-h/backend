@@ -105,7 +105,7 @@ app.post("/attendance", async(c) => {
         FROM attendance_board
         WHERE start_from  <= ?1
           AND ?1 <= start_from + seconds_from_be_late_to_end
-          AND id IN (
+          AND subject_id IN (
             SELECT subject_id
             FROM registration
             WHERE student_id = ?2
