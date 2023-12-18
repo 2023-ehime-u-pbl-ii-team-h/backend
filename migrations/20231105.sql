@@ -24,14 +24,14 @@ CREATE TABLE IF NOT EXISTS "charge"(
     "id" TEXT PRIMARY KEY,
     "teacher_id" TEXT NOT NULL,
     "subject_id" TEXT NOT NULL,
-    FOREIGN KEY (teacher_id) REFERENCES subject(id) FOREIGN KEY (subject_id) REFERENCES subject(id)
+    FOREIGN KEY (teacher_id) REFERENCES account(id) FOREIGN KEY (subject_id) REFERENCES subject(id)
 );
 
 CREATE TABLE IF NOT EXISTS "registration"(
     "id" TEXT PRIMARY KEY,
     "student_id" TEXT,
     "subject_id" TEXT,
-    FOREIGN KEY (student_id) REFERENCES student(id) FOREIGN KEY (subject_id) REFERENCES subject(id)
+    FOREIGN KEY (student_id) REFERENCES account(id) FOREIGN KEY (subject_id) REFERENCES subject(id)
 );
 
 CREATE TABLE IF NOT EXISTS "attendance_board"(
@@ -48,5 +48,5 @@ CREATE TABLE IF NOT EXISTS "attendance"(
     "created_at" INTEGER NOT NULL,
     "who" TEXT NOT NULL,
     "where" TEXT NOT NULL,
-    FOREIGN KEY ("who") REFERENCES student(id) FOREIGN KEY ("where") REFERENCES attendance_board(id)
+    FOREIGN KEY ("who") REFERENCES account(id) FOREIGN KEY ("where") REFERENCES attendance_board(id)
 );
