@@ -1,10 +1,11 @@
 import { Account } from "../model/account";
 import { ID } from "../model/id";
+import { StudentQueryService } from "../service/attend";
 import { AccountRepository } from "../service/get-or-new-account";
 import { AccountQueryService } from "../service/new-subject";
 
 export class D1AccountRepository
-  implements AccountRepository, AccountQueryService
+  implements AccountRepository, AccountQueryService, StudentQueryService
 {
   constructor(private readonly db: D1Database) {}
 
@@ -17,6 +18,15 @@ export class D1AccountRepository
       throw new Error(`account having email ${email} not found`);
     }
     return entry as Account;
+  }
+
+  async isValidStudent(accountId: ID<Account>): Promise<boolean> {
+    return (
+      (await this.db
+        .prepare("SELECT * FROM account WHERE role = 'STUDENT' AND id = ?1")
+        .bind(accountId)
+        .first()) !== null
+    );
   }
 
   async existsAll(...ids: ID<Account>[]): Promise<boolean> {
