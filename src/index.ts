@@ -210,7 +210,7 @@ app.post("/attendance", async (c) => {
   return new Response();
 });
 
-app.get("/attendance/:course_id", async(c) => {
+app.get("/attendances/:course_id", async(c) => {
   const subjectID = c.req.param('course_id');
   const honoSession = c.get('session');
   const session = honoSession.get("login") as Session | null;
@@ -218,6 +218,7 @@ app.get("/attendance/:course_id", async(c) => {
     return c.text("Unauthorized", 401);
   }
 
+  //科目が存在するか、履修しているかをチェック
   const [subjectResult, registration] = c.env.DB.batch([
     c.env.DB.prepare("SELECT id FROM subjet WHERE id = ?").bind(subjectID),
     c.env.DB.prepare("SELECT * registration WHERE subject_id = ?1 AND student_id = ?2").bind(subjectID, session.account.id)
@@ -230,54 +231,26 @@ app.get("/attendance/:course_id", async(c) => {
   if ( !isRegistration ){
     return c.text("Not Found", 404);
   }
-  /*DBから出席情報を取り出す*/
-  const attendance = await c.env.DB
-  .prepare("SELECT * FROM attendance WHERE who = ?")
-  .bind(session.account.id)
-  .all();
 
-  /*type AttendanceBoardを作る前準備*/
-  //すべての出席を取り出す
-  const allAttendanceBoard = await c.env.DB
-  .prepare("SELECT * FROM attendance_board WHERE subject_id = ?")
-  .bind(subjectID)
-  .all();
-  if ( !allAttendanceBoard ){
-    return c.text("Not Found", 404);
-  }
-  const attendanceBoard: AttendanceBoard[] = new Array(16);
-  for ( let i = 0; i < allAttendanceBoard.length; i++ ){
-    attendanceBoard[i]= {
-      id: allAttendanceBoard[i].id,
-      subject: allAttendanceBoard[i].subject_id,
-      startFrom: allAttendanceBoard[i].start_from,
-      secondsFromStartToBeLate: allAttendanceBoard[i].seconds_from_be_late,
-      secondsFromBeLateToEnd: allAttendanceBoard[i].seconds_from_be_late_to_end
-    }
-  }
-  /*加工する*/
-  const attendanceResult: AttendanceState[] = new Array(16);
-  let on_time, late, miss = 0;
-  for ( let i = 0; i < attendanceBoard.length; i++ ){
-    attendanceResult[i] = determineState(attendanceBoard[i], attendance.create_at)
-    switch ( attendanceResult[i] ){
-      case "ATTENDED":
-        on_time++;
-        break;
-      case "BE_LATE":
-        late++;
-        break;
-      case "CLOSED":
-        miss++;
-        break;
-    }
-  }
+  /*出席状況を取得*/
+  const attendances = c.env.DB
+  .prepare(`
+    SELECT
+      SUM(CASE WHEN attendance.create_at BETWEEN attendance_board.start_from AND attendance_board.seconds_from_start_to_be_late THEN 1 ELSE 0 END) AS on_time,
+      SUN(CASE WHEN attendance.create_at BETWEEN attendance_board.seconds_from_start_to_be_late AND attendance_board.from_to_be_late_to_end THEN 1 ELSE 0 END) AS late,
+      SUM(CASE WHEN attendance.create_at >= attendance_board.seconds_from_to_be_late_to_end THEN 1 ELSE 0 END) AS miss
+    FROM attendance
+    NATURAL JOIN attendance_board
+    WHERE attendance.who = ?1 AND attendance_board.subject_id = ?2
+  `)
+  .bind(session.account.id, subjectID)
+  .first();
 
   /*JSON形式で返す*/
   return c.json({
-    on_time: on_time,
-    late: late,
-    miss: miss
+    on_time: attendances.on_time,
+    late: attendances.late,
+    miss: attendances.miss
   });
 });
 
