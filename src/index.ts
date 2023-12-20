@@ -241,7 +241,7 @@ app.get("/attendances/:course_id", async(c) => {
       SUM(CASE WHEN attendance.created_at >= (attendance.created_at + attendance_board.seconds_from_start_to_be_late + attendance_board.from_be_late_to_end) THEN 1 ELSE 0 END) AS miss
     FROM attendance
     INNER JOIN attendance_board
-      ON attendance.\"where\" = attendance.board.id
+      ON attendance."where" = attendance_board.id
     WHERE attendance.who = ?1 AND attendance_board.subject_id = ?2
   `)
   .bind(session.account.id, subjectID)
@@ -249,9 +249,9 @@ app.get("/attendances/:course_id", async(c) => {
 
   /*JSON形式で返す*/
   return c.json({
-    on_time: on_time,
-    late: late,
-    miss: miss
+    on_time: on_time ?? 0,
+    late: late ?? 0,
+    miss: miss ?? 0
   });
 });
 
