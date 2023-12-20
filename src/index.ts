@@ -219,7 +219,7 @@ app.get("/attendances/:course_id", async(c) => {
   }
 
   //科目が存在するか、履修しているかをチェック
-  const [subjectResult, registration] = c.env.DB.batch([
+  const [subjectResult, registration] = await c.env.DB.batch([
     c.env.DB.prepare("SELECT id FROM subjet WHERE id = ?").bind(subjectID),
     c.env.DB.prepare("SELECT * registration WHERE subject_id = ?1 AND student_id = ?2").bind(subjectID, session.account.id)
   ])
@@ -233,7 +233,7 @@ app.get("/attendances/:course_id", async(c) => {
   }
 
   /*出席状況を取得*/
-  const { on_time, late, miss } = c.env.DB
+   const entry = await c.env.DB
   .prepare(`
     SELECT
       SUM(CASE WHEN attendance.created_at BETWEEN attendance_board.start_from AND (atendance.created_at + attendance_board.seconds_from_start_to_be_late) THEN 1 ELSE 0 END) AS on_time,
@@ -246,6 +246,11 @@ app.get("/attendances/:course_id", async(c) => {
   `)
   .bind(session.account.id, subjectID)
   .first();
+
+  if ( entry === null ){
+    throw new Error("SUM up query was invalid");
+  }
+  const { on_time, late, miss } = entry;
 
   /*JSON形式で返す*/
   return c.json({
