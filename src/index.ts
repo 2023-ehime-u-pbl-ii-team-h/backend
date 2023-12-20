@@ -233,14 +233,15 @@ app.get("/attendances/:course_id", async(c) => {
   }
 
   /*出席状況を取得*/
-  const attendances = c.env.DB
+  const { on_time, late, miss } = c.env.DB
   .prepare(`
     SELECT
-      SUM(CASE WHEN attendance.create_at BETWEEN attendance_board.start_from AND attendance_board.seconds_from_start_to_be_late THEN 1 ELSE 0 END) AS on_time,
-      SUN(CASE WHEN attendance.create_at BETWEEN attendance_board.seconds_from_start_to_be_late AND attendance_board.from_to_be_late_to_end THEN 1 ELSE 0 END) AS late,
-      SUM(CASE WHEN attendance.create_at >= attendance_board.seconds_from_to_be_late_to_end THEN 1 ELSE 0 END) AS miss
+      SUM(CASE WHEN attendance.created_at BETWEEN attendance_board.start_from AND (atendance.created_at + attendance_board.seconds_from_start_to_be_late) THEN 1 ELSE 0 END) AS on_time,
+      SUM(CASE WHEN attendance.created_at BETWEEN (attendance.created_at + attendance_board.seconds_from_start_to_be_late) AND (attendance.created_at + attendance_board.seconds_from_start_to_be_late + attendance_board.seconds_from_be_late_to_end) THEN 1 ELSE 0 END) AS late,
+      SUM(CASE WHEN attendance.created_at >= (attendance.created_at + attendance_board.seconds_from_start_to_be_late + attendance_board.from_be_late_to_end) THEN 1 ELSE 0 END) AS miss
     FROM attendance
-    NATURAL JOIN attendance_board
+    INNER JOIN attendance_board
+      ON attendance.\"where\" = attendance.board.id
     WHERE attendance.who = ?1 AND attendance_board.subject_id = ?2
   `)
   .bind(session.account.id, subjectID)
@@ -248,9 +249,9 @@ app.get("/attendances/:course_id", async(c) => {
 
   /*JSON形式で返す*/
   return c.json({
-    on_time: attendances.on_time,
-    late: attendances.late,
-    miss: attendances.miss
+    on_time: on_time,
+    late: late,
+    miss: miss
   });
 });
 
