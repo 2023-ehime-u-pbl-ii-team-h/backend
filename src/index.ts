@@ -176,4 +176,25 @@ app.get("/attendances/:course_id", async (c) => {
   return c.json(sum);
 });
 
+app.get("/me", async (c) => {
+  const HonoSession = c.get("session");
+  const login = HonoSession.get("login") as Session | null;
+  if (!login) {
+    return c.text("Unauthorized", 401);
+  }
+  const entry = await c.env.DB.prepare("SELECT name FROM account WHERE id = ?")
+    .bind(login.account.id)
+    .first();
+
+  if (entry === null) {
+    throw new Error("Entry was invalid");
+  }
+
+  const { name } = entry;
+  return c.json({
+    name: name,
+    email: login.account.email,
+  });
+});
+
 export default app;
