@@ -159,4 +159,54 @@ app.post("/attendance", async (c) => {
   return new Response();
 });
 
+app.get("/attendances/:course_id", async (c) => {
+  const subjectID = c.req.param("course_id");
+  const honoSession = c.get("session");
+  const session = honoSession.get("login") as Session | null;
+  if (!session) {
+    return c.text("Unauthorized", 401);
+  }
+
+  const [subjectResult, registration] = await c.env.DB.batch([
+    c.env.DB.prepare("SELECT id FROM subject WHERE id = ?").bind(subjectID),
+    c.env.DB.prepare(
+      "SELECT * registration WHERE subject_id = ?1 AND student_id = ?2",
+    ).bind(subjectID, session.account.id),
+  ]);
+  const subjectExists = subjectResult.results.length === 1;
+  const isRegistration = registration.results.length === 1;
+  if (!subjectExists) {
+    return c.text("Not Found", 404);
+  }
+  if (!isRegistration) {
+    return c.text("Not Found", 404);
+  }
+
+  const entry = await c.env.DB.prepare(
+    `
+    SELECT
+      SUM(CASE WHEN attendance_board.start_from <= attendance.created_at AND attendance.created_at < (attendance_board.start_from + attendance_board.seconds_from_start_to_be_late) THEN 1 ELSE 0 END) AS on_time,
+      SUM(CASE WHEN (attendance_board.start_from + attendance_board.seconds_from_start_to_be_late) <= attendance.created_at AND attendance.created_at < (attendance_board.start_from + attendance_board.seconds_from_start_to_be_late + attendance_board.seconds_from_be_late_to_end) THEN 1 ELSE 0 END) AS late,
+      SUM(CASE WHEN (attendance_board.start_from + attendance_board.seconds_from_start_to_be_late + attendance_board.seconds_from_be_late_to_end) <= attendance.created_at THEN 1 ELSE 0 END) AS miss
+    FROM attendance
+    INNER JOIN attendance_board
+      ON attendance."where" = attendance_board.id
+    WHERE attendance.who = ?1 AND attendance_board.subject_id = ?2
+  `,
+  )
+    .bind(session.account.id, subjectID)
+    .first();
+
+  if (entry === null) {
+    throw new Error("SUM up query was invalid");
+  }
+  const { on_time, late, miss } = entry;
+
+  return c.json({
+    on_time: on_time ?? 0,
+    late: late ?? 0,
+    miss: miss ?? 0,
+  });
+});
+
 export default app;
