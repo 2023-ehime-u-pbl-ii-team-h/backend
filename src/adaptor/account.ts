@@ -55,4 +55,16 @@ export class D1AccountRepository
       email,
     };
   }
+
+  async selectAccountName(id: ID<Account>): Promise<string> {
+    const name = await this.db
+      .prepare("SELECT name FROM account WHERE id = ?")
+      .bind(id)
+      .first<string>("name");
+
+    if (name === null) {
+      throw new Error("Entry was invalid");
+    }
+    return name;
+  }
 }
