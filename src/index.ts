@@ -220,7 +220,7 @@ app.get("/attendances/:course_id", async(c) => {
 
   //科目が存在するか、履修しているかをチェック
   const [subjectResult, registration] = await c.env.DB.batch([
-    c.env.DB.prepare("SELECT id FROM subjet WHERE id = ?").bind(subjectID),
+    c.env.DB.prepare("SELECT id FROM subject WHERE id = ?").bind(subjectID),
     c.env.DB.prepare("SELECT * registration WHERE subject_id = ?1 AND student_id = ?2").bind(subjectID, session.account.id)
   ])
   const subjectExists = subjectResult.results.length === 1;
@@ -236,9 +236,9 @@ app.get("/attendances/:course_id", async(c) => {
    const entry = await c.env.DB
   .prepare(`
     SELECT
-      SUM(CASE WHEN attendance.created_at BETWEEN attendance_board.start_from AND (atendance.created_at + attendance_board.seconds_from_start_to_be_late) THEN 1 ELSE 0 END) AS on_time,
-      SUM(CASE WHEN attendance.created_at BETWEEN (attendance.created_at + attendance_board.seconds_from_start_to_be_late) AND (attendance.created_at + attendance_board.seconds_from_start_to_be_late + attendance_board.seconds_from_be_late_to_end) THEN 1 ELSE 0 END) AS late,
-      SUM(CASE WHEN attendance.created_at >= (attendance.created_at + attendance_board.seconds_from_start_to_be_late + attendance_board.from_be_late_to_end) THEN 1 ELSE 0 END) AS miss
+      SUM(CASE WHEN attendance.created_at BETWEEN attendance_board.start_from AND (attendance_board.start_from + attendance_board.seconds_from_start_to_be_late) THEN 1 ELSE 0 END) AS on_time,
+      SUM(CASE WHEN attendance.created_at BETWEEN (attendance_board.start_from + attendance_board.seconds_from_start_to_be_late) AND (attendance_board.start_from + attendance_board.seconds_from_start_to_be_late + attendance_board.seconds_from_be_late_to_end) THEN 1 ELSE 0 END) AS late,
+      SUM(CASE WHEN attendance.created_at >= (attendance_board.start_from + attendance_board.seconds_from_start_to_be_late + attendance_board.seconds_from_be_late_to_end) THEN 1 ELSE 0 END) AS miss
     FROM attendance
     INNER JOIN attendance_board
       ON attendance."where" = attendance_board.id
