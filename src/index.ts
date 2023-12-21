@@ -212,22 +212,21 @@ app.get("/attendances/:course_id", async (c) => {
 app.get("/me", async (c) => {
   const HonoSession = c.get("session");
   const login = HonoSession.get("login") as Session | null;
-  if ( !login ){
+  if (!login) {
     return c.text("Unauthorized", 401);
   }
-  const entry = await c.env.DB
-  .prepare("SELECT name FROM account WHERE id = ?")
-  .bind(login.account.id)
-  .first();
+  const entry = await c.env.DB.prepare("SELECT name FROM account WHERE id = ?")
+    .bind(login.account.id)
+    .first();
 
-  if ( entry === null ){
+  if (entry === null) {
     throw new Error("Entry was invalid");
   }
 
   const { name } = entry;
   return c.json({
     name: name,
-    email: login.account.email
+    email: login.account.email,
   });
 });
 
