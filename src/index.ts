@@ -236,9 +236,9 @@ app.get("/attendances/:course_id", async(c) => {
    const entry = await c.env.DB
   .prepare(`
     SELECT
-      SUM(CASE WHEN attendance.created_at BETWEEN attendance_board.start_from AND (attendance_board.start_from + attendance_board.seconds_from_start_to_be_late) THEN 1 ELSE 0 END) AS on_time,
-      SUM(CASE WHEN attendance.created_at BETWEEN (attendance_board.start_from + attendance_board.seconds_from_start_to_be_late) AND (attendance_board.start_from + attendance_board.seconds_from_start_to_be_late + attendance_board.seconds_from_be_late_to_end) THEN 1 ELSE 0 END) AS late,
-      SUM(CASE WHEN attendance.created_at >= (attendance_board.start_from + attendance_board.seconds_from_start_to_be_late + attendance_board.seconds_from_be_late_to_end) THEN 1 ELSE 0 END) AS miss
+      SUM(CASE WHEN attendance_board.start_from <= attendance.created_at AND attendance.created_at < (attendance_board.start_from + attendance_board.seconds_from_start_to_be_late) THEN 1 ELSE 0 END) AS on_time,
+      SUM(CASE WHEN (attendance_board.start_from + attendance_board.seconds_from_start_to_be_late) <= attendance.created_at AND attendance.created_at < (attendance_board.start_from + attendance_board.seconds_from_start_to_be_late + attendance_board.seconds_from_be_late_to_end) THEN 1 ELSE 0 END) AS late,
+      SUM(CASE WHEN (attendance_board.start_from + attendance_board.seconds_from_start_to_be_late + attendance_board.seconds_from_be_late_to_end) <= attendance.created_at THEN 1 ELSE 0 END) AS miss
     FROM attendance
     INNER JOIN attendance_board
       ON attendance."where" = attendance_board.id
