@@ -182,17 +182,13 @@ app.get("/me", async (c) => {
   if (!login) {
     return c.text("Unauthorized", 401);
   }
-  const entry = await c.env.DB.prepare("SELECT name FROM account WHERE id = ?")
-    .bind(login.account.id)
-    .first();
 
-  if (entry === null) {
-    throw new Error("Entry was invalid");
-  }
+  const name = await new D1AccountRepository(c.env.DB).selectAccountName(
+    login.account.id,
+  );
 
-  const { name } = entry;
   return c.json({
-    name: name,
+    name,
     email: login.account.email,
   });
 });
