@@ -18,6 +18,7 @@ import { attend } from "./service/attend";
 import { D1AttendanceBoardRepository } from "./adaptor/attendance-board";
 import { D1AttendanceRepository } from "./adaptor/attendance";
 import { Subject } from "./model/subject";
+import { z } from "zod";
 
 type Bindings = {
   DB: D1Database;
@@ -89,45 +90,22 @@ app.post("/logout", async (c) => {
 app.post("/subjects", async (c) => {
   const session = c.get("session");
   const login = session.get("login") as Session;
-  let body: unknown;
-  try {
-    body = await c.req.json();
-  } catch (error) {
-    c.req.text().then(console.log);
-    return c.text("Bad Request", 400);
-  }
 
-  if (
-    !(
-      typeof body === "object" &&
-      body !== null &&
-      "name" in body &&
-      "assignees" in body
-    )
-  ) {
+  const schema = z.object({
+    name: z.string().min(1),
+    assignees: z.array(z.string().min(1)).min(1),
+  });
+  const result = await schema.safeParseAsync(await c.req.json());
+  if (!result.success) {
     return c.text("Bad Request", 400);
   }
-  if (typeof body.name !== "string" || body.name === "") {
-    return c.text("Bad Request", 400);
-  }
-  if (
-    !(
-      Array.isArray(body.assignees) &&
-      body.assignees.length >= 1 &&
-      body.assignees.every(
-        (assignee: unknown): assignee is ID<Teacher> =>
-          typeof assignee === "string",
-      )
-    )
-  ) {
-    return c.text("Bad Request", 400);
-  }
+  const { name, assignees } = result.data;
 
   const ret = await newSubject({
     session: login,
     params: {
-      name: body.name,
-      assignees: body.assignees,
+      name,
+      assignees: assignees as ID<Teacher>[],
     },
     query: new D1AccountRepository(c.env.DB),
     repo: new D1SubjectRepository(c.env.DB),
