@@ -224,7 +224,7 @@ app.get("/me", async (c) => {
     throw new Error("Entry was invalid");
   }
 
-  const name = entry;
+  const { name } = entry;
   return c.json({
     name: name,
     email: login.account.email
