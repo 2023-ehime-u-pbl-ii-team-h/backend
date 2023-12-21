@@ -171,4 +171,37 @@ app.get("/me", async (c) => {
   });
 });
 
+app.get("/subjects/:subject_id", async (c) => {
+  const subjectID = c.req.param("subject_id") as ID<Subject>;
+
+  const [ subjectEntry, teacherEntry, attendanceBoardEntry ] = await c.env.DB.batch([
+    c.env.DB.prepare("SELECT name FROM subject WHERE id = ?").bind(subjectID),
+    c.env.DB.prepare("SELECT teacher_id FROM charge WHERE subject_id = ?").bind(subjectID),
+    c.env.DB.prepare("SELECT id, start_from, seconds_from_start_to_be_late, seconds_from_be_late_to_end FROM attendance_board WHERE subject_id = ?").bind(subjectID),
+  ]);
+  if ( subjectEntry === null ){
+    throw new Error("Subject query was invalid");
+  }
+  if ( teacherEntry === null ){
+    throw new Error("Charge query was invalid"); 
+  }
+  if ( attendanceBoardEntry === null ){
+    return c.text("Not Found", 404);
+  }
+
+  const { subjectName } = subjectEntry;
+  const { chargeTeacherID } = teacherEntry;
+  const { attendanceBoardID, startFrom, secondsFromStartToBeLate, secondsFromBeLateToEnd } = attendanceBoardEntry;
+
+  return c.json({
+    name: subjectName,
+    assignees: chargeTeacherID,
+    boards: {
+      id: attendanceBoardID,
+      startFrom: startFrom.toISOString(),
+      secondsFromStartToBeLate: secondsFromStartToBeLate,
+      secondsFromBeLateToEnd: secondsFromBeLateToEnd,
+    }
+  });
+});
 export default app;
