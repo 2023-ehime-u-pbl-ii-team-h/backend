@@ -213,7 +213,7 @@ app.get("/me", async (c) => {
   const HonoSession = c.get("session");
   const login = HonoSession.get("login") as Session | null;
   if ( !login ){
-    return c.text("Unauthorzed", 401);
+    return c.text("Unauthorized", 401);
   }
   const entry = await c.env.DB
   .prepare("SELECT name FROM account WHERE id = ?")
