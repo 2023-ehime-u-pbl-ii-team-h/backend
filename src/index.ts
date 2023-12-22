@@ -173,29 +173,34 @@ app.get("/me", async (c) => {
 
 app.get("/subjects/:subject_id", async (c) => {
   const subjectID = c.req.param("subject_id") as ID<Subject>;
-  
-  const [ subjectEntry, teacherEntry, attendanceBoardEntry ] = await c.env.DB.batch([
-    c.env.DB.prepare("SELECT name FROM subject WHERE id = ?").bind(subjectID),
-    c.env.DB.prepare("SELECT teacher_id FROM charge WHERE subject_id = ?").bind(subjectID),
-    c.env.DB.prepare("SELECT id, start_from, seconds_from_start_to_be_late, seconds_from_be_late_to_end FROM attendance_board WHERE subject_id = ?").bind(subjectID),
-  ]);
-  if ( !subjectEntry.success ){
+
+  const [subjectEntry, teacherEntry, attendanceBoardEntry] =
+    await c.env.DB.batch([
+      c.env.DB.prepare("SELECT name FROM subject WHERE id = ?").bind(subjectID),
+      c.env.DB.prepare(
+        "SELECT teacher_id FROM charge WHERE subject_id = ?",
+      ).bind(subjectID),
+      c.env.DB.prepare(
+        "SELECT id, start_from, seconds_from_start_to_be_late, seconds_from_be_late_to_end FROM attendance_board WHERE subject_id = ?",
+      ).bind(subjectID),
+    ]);
+  if (!subjectEntry.success) {
     throw new Error("Subject query was invalid");
   }
-  if ( !teacherEntry.success ){
-    throw new Error("Charge query was invalid"); 
+  if (!teacherEntry.success) {
+    throw new Error("Charge query was invalid");
   }
-  if ( !attendanceBoardEntry.success ){
+  if (!attendanceBoardEntry.success) {
     return c.text("Not Found", 404);
   }
 
   const { name: subjectName } = subjectEntry.results[0];
   const assignees = teacherEntry.results.map(({ teacher_id }) => teacher_id);
-  const { 
-    id: attendanceBoardID, 
-    start_from: startFrom, 
-    seconds_from_start_to_be_late: secondsFromStartToBeLate, 
-    seconds_from_be_late_to_end: secondsFromBeLateToEnd 
+  const {
+    id: attendanceBoardID,
+    start_from: startFrom,
+    seconds_from_start_to_be_late: secondsFromStartToBeLate,
+    seconds_from_be_late_to_end: secondsFromBeLateToEnd,
   } = attendanceBoardEntry.results[0];
 
   return c.json({
@@ -206,7 +211,7 @@ app.get("/subjects/:subject_id", async (c) => {
       startFrom: new Date(startFrom * 1000).toISOString(),
       secondsFromStartToBeLate: secondsFromStartToBeLate,
       secondsFromBeLateToEnd: secondsFromBeLateToEnd,
-    }
+    },
   });
 });
 export default app;
