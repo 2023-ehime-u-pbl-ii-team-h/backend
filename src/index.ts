@@ -179,26 +179,26 @@ app.get("/subjects/:subject_id", async (c) => {
     c.env.DB.prepare("SELECT teacher_id FROM charge WHERE subject_id = ?").bind(subjectID),
     c.env.DB.prepare("SELECT id, start_from, seconds_from_start_to_be_late, seconds_from_be_late_to_end FROM attendance_board WHERE subject_id = ?").bind(subjectID),
   ]);
-  if ( subjectEntry === null ){
+  if ( !subjectEntry.success ){
     throw new Error("Subject query was invalid");
   }
-  if ( teacherEntry === null ){
+  if ( !teacherEntry.success ){
     throw new Error("Charge query was invalid"); 
   }
-  if ( attendanceBoardEntry === null ){
+  if ( !attendanceBoardEntry.success ){
     return c.text("Not Found", 404);
   }
 
-  const { subjectName } = subjectEntry;
-  const { chargeTeacherID } = teacherEntry;
-  const { attendanceBoardID, startFrom, secondsFromStartToBeLate, secondsFromBeLateToEnd } = attendanceBoardEntry;
+  const { subjectName } = subjectEntry.results[0];
+  const { chargeTeacherID } = teacherEntry.results[0];
+  const { attendanceBoardID, startFrom, secondsFromStartToBeLate, secondsFromBeLateToEnd } = attendanceBoardEntry.results[0];
 
   return c.json({
     name: subjectName,
     assignees: chargeTeacherID,
     boards: {
       id: attendanceBoardID,
-      startFrom: startFrom.toISOString(),
+      startFrom: new Date(startFrom * 1000).toISOString(),
       secondsFromStartToBeLate: secondsFromStartToBeLate,
       secondsFromBeLateToEnd: secondsFromBeLateToEnd,
     }
