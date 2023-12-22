@@ -198,7 +198,7 @@ app.get("/subjects/:subject_id", async (c) => {
     assignees: chargeTeacherID,
     boards: {
       id: attendanceBoardID,
-      startFrom: startFrom.toISOString(),
+      startFrom: new Date(startFrom * 1000).toISOString(),
       secondsFromStartToBeLate: secondsFromStartToBeLate,
       secondsFromBeLateToEnd: secondsFromBeLateToEnd,
     }
