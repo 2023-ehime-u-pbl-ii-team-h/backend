@@ -189,9 +189,14 @@ app.get("/subjects/:subject_id", async (c) => {
     return c.text("Not Found", 404);
   }
 
-  const { subjectName } = subjectEntry.results[0];
-  const { chargeTeacherID } = teacherEntry.results[0];
-  const { attendanceBoardID, startFrom, secondsFromStartToBeLate, secondsFromBeLateToEnd } = attendanceBoardEntry.results[0];
+  const { name: subjectName } = subjectEntry.results[0];
+  const { teacher_id: chargeTeacherID } = teacherEntry.results[0];
+  const { 
+    id: attendanceBoardID, 
+    start_from: startFrom, 
+    seconds_from_start_to_be_late: secondsFromStartToBeLate, 
+    seconds_from_be_late_to_end: secondsFromBeLateToEnd 
+  } = attendanceBoardEntry.results[0];
 
   return c.json({
     name: subjectName,
