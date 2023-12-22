@@ -173,7 +173,7 @@ app.get("/me", async (c) => {
 
 app.get("/subjects/:subject_id", async (c) => {
   const subjectID = c.req.param("subject_id") as ID<Subject>;
-
+  
   const [ subjectEntry, teacherEntry, attendanceBoardEntry ] = await c.env.DB.batch([
     c.env.DB.prepare("SELECT name FROM subject WHERE id = ?").bind(subjectID),
     c.env.DB.prepare("SELECT teacher_id FROM charge WHERE subject_id = ?").bind(subjectID),
