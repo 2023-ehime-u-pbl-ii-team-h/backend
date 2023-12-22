@@ -190,7 +190,7 @@ app.get("/subjects/:subject_id", async (c) => {
   }
 
   const { name: subjectName } = subjectEntry.results[0];
-  const { teacher_id: chargeTeacherID } = teacherEntry.results[0];
+  const assignees = teacherEntry.results.map(({ teacher_id }) => teacher_id);
   const { 
     id: attendanceBoardID, 
     start_from: startFrom, 
@@ -200,7 +200,7 @@ app.get("/subjects/:subject_id", async (c) => {
 
   return c.json({
     name: subjectName,
-    assignees: chargeTeacherID,
+    assignees,
     boards: {
       id: attendanceBoardID,
       startFrom: new Date(startFrom * 1000).toISOString(),
