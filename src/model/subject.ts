@@ -1,10 +1,6 @@
 import { ID } from "./id";
-// import { AttendanceBoard } from "./attendance-board";
+import { AttendanceBoard } from "./attendance-board";
 import { Student, Teacher } from "./account";
-
-export interface AttendanceBoard {
-  startFrom: Date;
-}
 
 export class Subject {
   constructor(
