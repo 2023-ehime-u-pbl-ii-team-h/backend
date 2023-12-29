@@ -19,6 +19,7 @@ import { D1AttendanceBoardRepository } from "./adaptor/attendance-board";
 import { D1AttendanceRepository } from "./adaptor/attendance";
 import { Subject } from "./model/subject";
 import { z } from "zod";
+import { cors } from "hono/cors"
 
 type Bindings = {
   DB: D1Database;
@@ -48,6 +49,12 @@ app.use("*", (c, next) => {
   }) as unknown as MiddlewareHandler;
   return middleware(c, next);
 });
+app.use(
+  "*",
+  cors({
+    origin: ['https://student-66e.pages.dev', 'https://teacher-3zl.pages.dev'],
+  })
+);
 
 app.get("/login", async (c) => {
   const redirectUrl = await login(
