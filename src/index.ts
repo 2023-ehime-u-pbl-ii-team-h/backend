@@ -47,11 +47,14 @@ app.use("*", (c, next) => {
       httpOnly: true,
     },
   }) as unknown as MiddlewareHandler;
-  cors({
-    origin: ['https://student-66e.pages.dev', 'https://teacher-3zl.pages.dev'],
-  });
   return middleware(c, next);
 });
+app.use(
+  "*",
+  cors({
+    origin: ['https://student-66e.pages.dev', 'https://teacher-3zl.pages.dev'],
+  })
+);
 
 app.get("/login", async (c) => {
   const redirectUrl = await login(
