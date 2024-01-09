@@ -173,56 +173,49 @@ app.get("/me", async (c) => {
   );
 
   //roleを確認
-  const roleEntry = await c.env.DB
+  const role = await c.env.DB
   .prepare("SELECT role FROM account WHERE id = ?")
   .bind(login.account.id)
-  .first();
-  if ( roleEntry === null ){
-    throw new Error("Entry was invalid");
+  .first("role"); //roleだけ得られる
+  if ( role === null ){
+    throw new Error("role query was invalid");
   }
 
-  const { role } = roleEntry;
   //学生であった場合registrationから科目idを取り出す
   if ( role === 'STUDENT'){
-    const subjectEntry = c.env.DB
+    const subjectIdRows = await c.env.DB
     .prepare("SELECT subject_id FROM registration WHERE sutudent_id = ?")
     .bind(login.account.id)
     .raw();
 
-    if ( subjectEntry === null ){
-      throw new Error("Entry was invalid");
+    if ( subjectIdRows === null ){
+      throw new Error("subject query was invalid");
     }
-
-    const subject = subjectEntry;
     
     return c.json({
       name,
       email: login.account.email,
-      registrations: subject,
+      registrations: subjectIdRows.flat(),
     });
   }
   //教師であった場合chargeから科目idを取り出す
   else if ( role === 'TEACHER' ){
-    const subjectEntry = await c.env.DB
+    const subjectIdRows = await c.env.DB
     .prepare("SELECT subject_id FROM charge WHERE teacher_id = ?")
     .bind(login.account.id)
     .raw();
 
-    if ( subjectEntry === null ){
-      throw new Error("Entry was invalid");
+    if ( subjectIdRows === null ){
+      throw new Error("subject query was invalid");
     }
-
-    const subject = subjectEntry;
     
     return c.json({
       name,
       email: login.account.email,
-      charges: subject,
+      charges: subjectIdRows.flat(),
     });
   }
-  else {
-    throw new Error("Role was invalid");
-  }
+  throw new Error(`unknown role: ${role}`);
 });
 
 app.get("/subjects/:subject_id", async (c) => {
