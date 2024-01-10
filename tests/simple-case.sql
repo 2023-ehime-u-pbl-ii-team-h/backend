@@ -24,11 +24,11 @@ VALUES
     ('sub01', 'TEST Subject');
 
 INSERT INTO
-    charge (id, teacher_id, subject_id)
+    charge (teacher_id, subject_id)
 VALUES
-    ('cha01', 'acc02', 'sub01');
+    ('acc02', 'sub01');
 
 INSERT INTO
-    registration (id, student_id, subject_id)
+    registration (student_id, subject_id)
 VALUES
-    ('reg01', 'acc01', 'sub01');
+    ('acc01', 'sub01');

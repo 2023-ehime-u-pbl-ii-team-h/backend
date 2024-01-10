@@ -14,16 +14,14 @@ export class D1SubjectRepository implements SubjectRepository {
     assignees: ID<Teacher>[],
   ): Promise<void> {
     const insertCharge = this.db.prepare(
-      "INSERT INTO charge (id, teacher_id, subject_id) VALUES (?, ?, ?)",
+      "INSERT INTO charge (teacher_id, subject_id) VALUES (?, ?)",
     );
     await this.db.batch(
       [
         this.db
           .prepare("INSERT INTO subject (id, name) VALUES (?, ?)")
           .bind(id, name),
-      ].concat(
-        assignees.map((assignee) => insertCharge.bind(nanoid(), assignee, id)),
-      ),
+      ].concat(assignees.map((assignee) => insertCharge.bind(assignee, id))),
     );
   }
 
