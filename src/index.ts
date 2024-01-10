@@ -19,7 +19,7 @@ import { D1AttendanceBoardRepository } from "./adaptor/attendance-board";
 import { D1AttendanceRepository } from "./adaptor/attendance";
 import { Subject } from "./model/subject";
 import { z } from "zod";
-import { cors } from "hono/cors"
+import { cors } from "hono/cors";
 
 type Bindings = {
   DB: D1Database;
@@ -52,8 +52,8 @@ app.use("*", (c, next) => {
 app.use(
   "*",
   cors({
-    origin: ['https://student-66e.pages.dev', 'https://teacher-3zl.pages.dev'],
-  })
+    origin: ["https://student-66e.pages.dev", "https://teacher-3zl.pages.dev"],
+  }),
 );
 
 app.get("/login", async (c) => {
@@ -172,43 +172,42 @@ app.get("/me", async (c) => {
     login.account.id,
   );
 
-  //roleを確認
-  const role = await c.env.DB
-  .prepare("SELECT role FROM account WHERE id = ?")
-  .bind(login.account.id)
-  .first("role"); //roleだけ得られる
-  if ( role === null ){
+  const role = await c.env.DB.prepare("SELECT role FROM account WHERE id = ?")
+    .bind(login.account.id)
+    .first("role");
+  if (role === null) {
     throw new Error("role query was invalid");
   }
 
-  //学生であった場合registrationから科目idを取り出す
-  if ( role === 'STUDENT'){
-    const subjectIdRows = await c.env.DB
-    .prepare("SELECT subject_id FROM registration WHERE student_id = ?")
-    .bind(login.account.id)
-    .raw();
+  if (role === "STUDENT") {
+    const subjectIdRows = await c.env.DB.prepare(
+      "SELECT subject_id FROM registration WHERE student_id = ?",
+    )
+      .bind(login.account.id)
+      .raw();
 
-    if ( subjectIdRows === null ){
+    if (subjectIdRows === null) {
       throw new Error("subject query was invalid");
     }
-    
+
     return c.json({
       name,
       email: login.account.email,
       registrations: subjectIdRows.flat(),
     });
   }
-  //教師であった場合chargeから科目idを取り出す
-  if ( role === 'TEACHER' ){
-    const subjectIdRows = await c.env.DB
-    .prepare("SELECT subject_id FROM charge WHERE teacher_id = ?")
-    .bind(login.account.id)
-    .raw();
 
-    if ( subjectIdRows === null ){
+  if (role === "TEACHER") {
+    const subjectIdRows = await c.env.DB.prepare(
+      "SELECT subject_id FROM charge WHERE teacher_id = ?",
+    )
+      .bind(login.account.id)
+      .raw();
+
+    if (subjectIdRows === null) {
       throw new Error("subject query was invalid");
     }
-    
+
     return c.json({
       name,
       email: login.account.email,
