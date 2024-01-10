@@ -172,10 +172,50 @@ app.get("/me", async (c) => {
     login.account.id,
   );
 
-  return c.json({
-    name,
-    email: login.account.email,
-  });
+  //roleを確認
+  const role = await c.env.DB
+  .prepare("SELECT role FROM account WHERE id = ?")
+  .bind(login.account.id)
+  .first("role"); //roleだけ得られる
+  if ( role === null ){
+    throw new Error("role query was invalid");
+  }
+
+  //学生であった場合registrationから科目idを取り出す
+  if ( role === 'STUDENT'){
+    const subjectIdRows = await c.env.DB
+    .prepare("SELECT subject_id FROM registration WHERE student_id = ?")
+    .bind(login.account.id)
+    .raw();
+
+    if ( subjectIdRows === null ){
+      throw new Error("subject query was invalid");
+    }
+    
+    return c.json({
+      name,
+      email: login.account.email,
+      registrations: subjectIdRows.flat(),
+    });
+  }
+  //教師であった場合chargeから科目idを取り出す
+  if ( role === 'TEACHER' ){
+    const subjectIdRows = await c.env.DB
+    .prepare("SELECT subject_id FROM charge WHERE teacher_id = ?")
+    .bind(login.account.id)
+    .raw();
+
+    if ( subjectIdRows === null ){
+      throw new Error("subject query was invalid");
+    }
+    
+    return c.json({
+      name,
+      email: login.account.email,
+      charges: subjectIdRows.flat(),
+    });
+  }
+  throw new Error(`unknown role: ${role}`);
 });
 
 app.get("/subjects/:subject_id", async (c) => {
