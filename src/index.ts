@@ -184,7 +184,7 @@ app.get("/me", async (c) => {
   //学生であった場合registrationから科目idを取り出す
   if ( role === 'STUDENT'){
     const subjectIdRows = await c.env.DB
-    .prepare("SELECT subject_id FROM registration WHERE sutudent_id = ?")
+    .prepare("SELECT subject_id FROM registration WHERE student_id = ?")
     .bind(login.account.id)
     .raw();
 
@@ -199,7 +199,7 @@ app.get("/me", async (c) => {
     });
   }
   //教師であった場合chargeから科目idを取り出す
-  else if ( role === 'TEACHER' ){
+  if ( role === 'TEACHER' ){
     const subjectIdRows = await c.env.DB
     .prepare("SELECT subject_id FROM charge WHERE teacher_id = ?")
     .bind(login.account.id)
