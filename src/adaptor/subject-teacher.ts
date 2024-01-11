@@ -9,11 +9,11 @@ export class D1SubjectTeacherRepository {
   async teachersByEachSubject(
     subjects: readonly Subject[],
   ): Promise<Teacher[][]> {
-    const statement = this.db.prepare(
+    const selectTeacher = this.db.prepare(
       "SELECT account.id, account.name, account.email, account.role FROM charge INNER JOIN account ON account.id = charge.teacher_id AND charge.subject_id = ?1 AND account.role = 'TEACHER'",
     );
     const resultsBySubject = await this.db.batch<Teacher>(
-      subjects.map(({ id }) => statement.bind(id)),
+      subjects.map(({ id }) => selectTeacher.bind(id)),
     );
     return resultsBySubject.map(({ results }) => {
       if (!results) {
