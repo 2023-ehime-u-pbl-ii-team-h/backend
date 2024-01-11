@@ -61,7 +61,7 @@ export class D1SubjectRepository implements SubjectRepository {
     partialName: string,
     amount: number,
     offset: number,
-  ): Promise<{ id: ID<Subject>; name: string }[]> {
+  ): Promise<Subject[]> {
     const { results } = await this.db
       .prepare(
         "SELECT id, name FROM subject WHERE name LIKE ?1 ORDER BY name LIMIT ?2 OFFSET ?3",
@@ -72,6 +72,40 @@ export class D1SubjectRepository implements SubjectRepository {
       throw new Error(`query error with partial name: ${partialName}`);
     }
 
-    return results;
+    const statement = this.db.prepare(
+      "SELECT id, subject_id, start_from, seconds_from_start_to_be_late, seconds_from_be_late_to_end FROM attendance_board WHERE subject_id = ?1",
+    );
+    const batchResults = await this.db.batch<{
+      id: ID<AttendanceBoard>;
+      subject_id: ID<Subject>;
+      start_from: number;
+      seconds_from_start_to_be_late: number;
+      seconds_from_be_late_to_end: number;
+    }>(results.map(({ id }) => statement.bind(id)));
+
+    const boardsBySubjectId: Record<
+      ID<Subject>,
+      AttendanceBoard[] | undefined
+    > = {};
+    for (const batchResult of batchResults) {
+      if (batchResult.results) {
+        for (const board of batchResult.results) {
+          if (!boardsBySubjectId[board.subject_id]) {
+            boardsBySubjectId[board.subject_id] = [];
+          }
+          boardsBySubjectId[board.subject_id]!.push({
+            id: board.id,
+            subject: board.subject_id,
+            startFrom: new Date(board.start_from * 1000),
+            secondsFromStartToBeLate: board.seconds_from_start_to_be_late,
+            secondsFromBeLateToEnd: board.seconds_from_be_late_to_end,
+          });
+        }
+      }
+    }
+
+    return results.map(
+      ({ id, name }) => new Subject(id, name, boardsBySubjectId[id] ?? []),
+    );
   }
 }
