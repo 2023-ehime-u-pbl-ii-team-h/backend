@@ -38,17 +38,49 @@ const app = new Hono<{
 
 const store = new CookieStore();
 
+const EXPIRE_AFTER_SECONDS = 300;
+
 app.use("*", (c, next) => {
   const middleware = sessionMiddleware({
     store,
     encryptionKey: c.env.COOKIE_SECRET,
-    expireAfterSeconds: 300,
+    expireAfterSeconds: EXPIRE_AFTER_SECONDS,
     cookieOptions: {
       httpOnly: true,
     },
   }) as unknown as MiddlewareHandler;
   return middleware(c, next);
 });
+
+app.use("*", async (c, next) => {
+  const IGNORE = ["/login", REDIRECT_API_PATH, "/logout"];
+  if (!IGNORE.includes(c.req.path)) {
+    const session = c.get("session");
+    const login = session.get("login") as Session | null;
+    if (!login) {
+      return c.text("", 401);
+    }
+
+    const loginAt = await c.env.DB.prepare(
+      "SELECT login_at FROM session WHERE id = ?1",
+    )
+      .bind(login.id)
+      .first<number>("login_at");
+    if (!loginAt) {
+      return c.text("", 401);
+    }
+
+    const isExpired = !(loginAt + EXPIRE_AFTER_SECONDS < Date.now() / 1000);
+    if (isExpired) {
+      await c.env.DB.prepare("DELETE FROM session WHERE id = ?1")
+        .bind(login.id)
+        .run();
+      return c.text("", 401);
+    }
+  }
+  return next();
+});
+
 app.use(
   "*",
   cors({
@@ -63,7 +95,7 @@ app.get("/login", async (c) => {
       requestReferer: c.req.header("Referer") ?? "",
     },
     new MicrosoftOAuth(),
-    new HonoSessionRepository(c.get("session")),
+    new HonoSessionRepository(c.get("session"), c.env.DB),
   );
   return c.redirect(redirectUrl);
 });
@@ -72,7 +104,7 @@ app.post(REDIRECT_API_PATH, async (c) => {
   const form = await c.req.formData();
   const session = c.get("session");
 
-  const sessionRepo = new HonoSessionRepository(session);
+  const sessionRepo = new HonoSessionRepository(session, c.env.DB);
   const redirectUrl = await loginRedirect({
     query: {
       code: form.get("code") ?? "",
@@ -90,7 +122,14 @@ app.post(REDIRECT_API_PATH, async (c) => {
 });
 
 app.post("/logout", async (c) => {
-  c.get("session").deleteSession();
+  const session = c.get("session");
+  const login = session.get("login") as Session | null;
+  if (login) {
+    await c.env.DB.prepare("DELETE FROM session WHERE id = ?1")
+      .bind(login.id)
+      .run();
+  }
+  session.deleteSession();
   return new Response();
 });
 
