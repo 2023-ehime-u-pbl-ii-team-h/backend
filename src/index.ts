@@ -90,7 +90,14 @@ app.post(REDIRECT_API_PATH, async (c) => {
 });
 
 app.post("/logout", async (c) => {
-  c.get("session").deleteSession();
+  const session = c.get("session");
+  const login = session.get("login") as Session | null;
+  if (login) {
+    await c.env.DB.prepare("DELETE FROM session WHERE id = ?1")
+      .bind(login.id)
+      .run();
+  }
+  session.deleteSession();
   return new Response();
 });
 
