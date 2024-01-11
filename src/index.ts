@@ -63,7 +63,7 @@ app.get("/login", async (c) => {
       requestReferer: c.req.header("Referer") ?? "",
     },
     new MicrosoftOAuth(),
-    new HonoSessionRepository(c.get("session")),
+    new HonoSessionRepository(c.get("session"), c.env.DB),
   );
   return c.redirect(redirectUrl);
 });
@@ -72,7 +72,7 @@ app.post(REDIRECT_API_PATH, async (c) => {
   const form = await c.req.formData();
   const session = c.get("session");
 
-  const sessionRepo = new HonoSessionRepository(session);
+  const sessionRepo = new HonoSessionRepository(session, c.env.DB);
   const redirectUrl = await loginRedirect({
     query: {
       code: form.get("code") ?? "",
