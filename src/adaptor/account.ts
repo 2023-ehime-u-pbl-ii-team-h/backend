@@ -25,14 +25,17 @@ export class D1AccountRepository
     accountId: ID<Account>,
   ): Promise<Student | Teacher | null> {
     const entry = await this.db
-      .prepare("SELECT email, role FROM account WHERE id = ?1")
+      .prepare("SELECT name, email, role FROM account WHERE id = ?1")
       .bind(accountId)
       .first();
     if (!entry) {
       return null;
     }
 
-    const { email, role } = entry as Record<"name" | "email" | "role", string>;
+    const { name, email, role } = entry as Record<
+      "name" | "email" | "role",
+      string
+    >;
 
     if (role === "STUDENT") {
       const subjectIdRows = await this.db
@@ -46,6 +49,7 @@ export class D1AccountRepository
 
       return {
         id: accountId,
+        name,
         email,
         role,
         enrolling: subjectIdRows.flat() as ID<Subject>[],
@@ -63,6 +67,7 @@ export class D1AccountRepository
 
       return {
         id: accountId,
+        name,
         email,
         role,
         assigned: subjectIdRows.flat() as ID<Subject>[],
@@ -103,6 +108,7 @@ export class D1AccountRepository
     }
     return {
       id,
+      name,
       email,
     };
   }

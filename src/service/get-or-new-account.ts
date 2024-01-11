@@ -39,5 +39,6 @@ export async function getOrNewAccount(
   return {
     id: entry["id"] as ID<Account>,
     email: entry["email"] as string,
+    name: entry["name"],
   };
 }

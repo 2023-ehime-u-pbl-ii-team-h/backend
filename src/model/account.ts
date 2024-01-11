@@ -3,6 +3,7 @@ import { Subject } from "./subject";
 
 export type Account = {
   readonly id: ID<Account>;
+  readonly name: string;
   readonly email: string;
 };
 
