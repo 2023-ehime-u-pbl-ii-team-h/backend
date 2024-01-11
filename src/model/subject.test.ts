@@ -4,35 +4,29 @@ import { Subject } from "./subject";
 import { test, expect } from "vitest";
 
 const subjectId = "0" as ID<Subject>;
-const subject = new Subject(
-  subjectId,
-  "foo",
-  [
-    {
-      startFrom: new Date("2023-01-01"),
-      id: "0" as ID<AttendanceBoard>,
-      subject: subjectId,
-      secondsFromStartToBeLate: 300,
-      secondsFromBeLateToEnd: 300,
-    },
-    {
-      startFrom: new Date("2023-01-10"),
-      id: "0" as ID<AttendanceBoard>,
-      subject: subjectId,
-      secondsFromStartToBeLate: 300,
-      secondsFromBeLateToEnd: 300,
-    },
-    {
-      startFrom: new Date("2023-01-31"),
-      id: "0" as ID<AttendanceBoard>,
-      subject: subjectId,
-      secondsFromStartToBeLate: 300,
-      secondsFromBeLateToEnd: 300,
-    },
-  ],
-  [],
-  [],
-);
+const subject = new Subject(subjectId, "foo", [
+  {
+    startFrom: new Date("2023-01-01"),
+    id: "0" as ID<AttendanceBoard>,
+    subject: subjectId,
+    secondsFromStartToBeLate: 300,
+    secondsFromBeLateToEnd: 300,
+  },
+  {
+    startFrom: new Date("2023-01-10"),
+    id: "0" as ID<AttendanceBoard>,
+    subject: subjectId,
+    secondsFromStartToBeLate: 300,
+    secondsFromBeLateToEnd: 300,
+  },
+  {
+    startFrom: new Date("2023-01-31"),
+    id: "0" as ID<AttendanceBoard>,
+    subject: subjectId,
+    secondsFromStartToBeLate: 300,
+    secondsFromBeLateToEnd: 300,
+  },
+]);
 
 const getStartFrom = ({ startFrom }: AttendanceBoard): Date => startFrom;
 
