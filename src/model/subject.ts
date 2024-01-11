@@ -1,14 +1,11 @@
 import { ID } from "./id";
 import { AttendanceBoard } from "./attendance-board";
-import { Student, Teacher } from "./account";
 
 export class Subject {
   constructor(
     public readonly id: ID<Subject>,
     public readonly name: string,
     public readonly boards: readonly AttendanceBoard[],
-    public readonly enrolled: readonly ID<Student>[],
-    public readonly assigned: readonly ID<Teacher>[],
   ) {}
 
   shiftAll(days: number, firstIndex: number, lastIndex?: number): Subject {
@@ -27,12 +24,6 @@ export class Subject {
         newBoards[i].startFrom.getUTCDate() + days,
       );
     }
-    return new Subject(
-      this.id,
-      this.name,
-      newBoards,
-      this.enrolled,
-      this.assigned,
-    );
+    return new Subject(this.id, this.name, newBoards);
   }
 }
