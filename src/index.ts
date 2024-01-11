@@ -20,6 +20,8 @@ import { D1AttendanceRepository } from "./adaptor/attendance";
 import { Subject } from "./model/subject";
 import { z } from "zod";
 import { cors } from "hono/cors";
+import { D1SubjectTeacherRepository } from "./adaptor/subject-teacher";
+import { D1SubjectStudentRepository } from "./adaptor/subject-student";
 
 type Bindings = {
   DB: D1Database;
@@ -216,20 +218,55 @@ app.get("/me", async (c) => {
 
   switch (info.role) {
     case "STUDENT":
+      const [registrations] = await new D1SubjectStudentRepository(
+        c.env.DB,
+      ).subjectsByEachStudent([info]);
       return c.json({
         name,
         email: login.account.email,
-        registrations: info.enrolling,
+        registrations,
       });
     case "TEACHER":
+      const [charges] = await new D1SubjectTeacherRepository(
+        c.env.DB,
+      ).subjectsByEachTeacher([info]);
       return c.json({
         name,
         email: login.account.email,
-        charges: info.assigned,
+        charges,
       });
     default:
       throw new Error("unreachable");
   }
+});
+
+app.get("/subjects", async (c) => {
+  const now = new Date();
+  const name = c.req.query("name") ?? "";
+  const page = c.req.query("page") ?? "1";
+
+  const pageIndex = parseInt(page, 10);
+  if (!Number.isSafeInteger(pageIndex) || pageIndex <= 0) {
+    return c.text("", 400);
+  }
+
+  const PAGE_SIZE = 50;
+  const subjects = await new D1SubjectRepository(c.env.DB).searchSubjects(
+    name,
+    PAGE_SIZE,
+    pageIndex * PAGE_SIZE,
+  );
+  const teachersBySubject = await new D1SubjectTeacherRepository(
+    c.env.DB,
+  ).teachersByEachSubject(subjects);
+  return c.json(
+    subjects.map((subject, index) => ({
+      id: subject.id,
+      name: subject.name,
+      next_board_end: subject.nextBoardEnd(now),
+      assigned: teachersBySubject[index].map(({ name }) => name),
+    })),
+  );
 });
 
 app.get("/subjects/:subject_id", async (c) => {
@@ -240,9 +277,13 @@ app.get("/subjects/:subject_id", async (c) => {
     return c.text("Not Found", 404);
   }
 
+  const [assignees] = await new D1SubjectTeacherRepository(
+    c.env.DB,
+  ).teachersByEachSubject([subject]);
+
   return c.json({
     name: subject.name,
-    assignees: subject.assigned,
+    assignees,
     boards: subject.boards.map(
       ({
         id,
