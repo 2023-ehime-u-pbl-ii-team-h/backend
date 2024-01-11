@@ -162,7 +162,7 @@ app.post("/subjects", async (c) => {
   return c.json(ret);
 });
 
-app.post("/attendance", async (c) => {
+app.post("/attendances", async (c) => {
   const session = c.get("session");
   const login = session.get("login") as Session;
   await attend({
