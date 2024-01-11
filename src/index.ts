@@ -240,6 +240,22 @@ app.get("/me", async (c) => {
   }
 });
 
+app.put("/me/registrations/:subject_id", async (c) => {
+  const HonoSession = c.get("session");
+  const login = HonoSession.get("login") as Session | null;
+  if (!login || login.account.role !== "STUDENT") {
+    return c.text("", 401);
+  }
+
+  const subjectId = c.req.param("subject_id");
+  const { success } = await c.env.DB.prepare(
+    "INSERT INTO registration (student_id, subject_id) VALUES (?1, ?2)",
+  )
+    .bind(login.account.id, subjectId)
+    .run();
+  return c.text("", success ? 200 : 400);
+});
+
 app.get("/subjects", async (c) => {
   const now = new Date();
   const name = c.req.query("name") ?? "";
