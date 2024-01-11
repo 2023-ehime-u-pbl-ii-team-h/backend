@@ -26,4 +26,18 @@ export class Subject {
     }
     return new Subject(this.id, this.name, newBoards);
   }
+
+  nextBoardEnd(now: Date): Date | null {
+    const found = this.boards.find(
+      (board) => board.startFrom.valueOf() <= now.valueOf(),
+    );
+    if (!found) {
+      return null;
+    }
+    return new Date(
+      found.startFrom.valueOf() +
+        found.secondsFromStartToBeLate * 1000 +
+        found.secondsFromBeLateToEnd * 1000,
+    );
+  }
 }
