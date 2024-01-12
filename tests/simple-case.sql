@@ -32,3 +32,13 @@ INSERT INTO
     registration (student_id, subject_id)
 VALUES
     ('acc01', 'sub01');
+
+INSERT INTO
+    "session"(id, account_id, login_at, device_name)
+VALUES
+    ('ses01', 'acc01', unixepoch('now'), 'TEST Phone');
+
+INSERT INTO
+    "session"(id, account_id, login_at, device_name)
+VALUES
+    ('ses02', 'acc02', unixepoch('now'), 'TEST PC');
