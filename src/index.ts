@@ -224,8 +224,6 @@ app.get("/subjects/:subject_id", async (c) => {
 app.get("/subject/:subject_id/:board_id/attendances", async (c) => {
   //各パラメータの受け取り
   const { since, until }= c.req.query();
-  const subjectId = c.req.param("subject_id") as ID<Subject>;
-  const boardId = c.req.param("board_id") as ID<AttendanceBoard>;
 
   //認証する
   const HonoSession = c.get("session");
@@ -245,41 +243,148 @@ app.get("/subject/:subject_id/:board_id/attendances", async (c) => {
     throw new Error("Your role is not teacher");
   }
 
-  //DBにアクセスして情報を取得する(sinceとuntilも使う)
-  const msSince = Date.parse(since);
-  const msUntil = Date.parse(until);
-  //attendanceのid, created_atを取得
-  const attendanceEntry = await c.env.DB
-  .prepare("SELECT id, created_at , who FROM attendance WHERE created_at BETWEEN ?1 AND ?2")
-  .bind(msSince, msUntil)
-  .raw();
-  if ( attendanceEntry === null ){
-    throw new Error("attendance query was invalid");
-  }
-  const attendanceRows = attendanceEntry.flat();
-  const { attendanceId, createdAt, studentId } = attendanceRows;
+  //DBにアクセスして情報を取得する
+  if ( since !== null && until !== null ){ //since, untilがどちらも存在
+    const msSince = Date.parse(since);
+    const msUntil = Date.parse(until);
+    //attendanceのid, created_atを取得
+    const attendanceEntry = await c.env.DB
+    .prepare("SELECT id, created_at , who FROM attendance WHERE created_at BETWEEN ?1 AND ?2")
+    .bind(msSince, msUntil)
+    .raw();
+    if ( attendanceEntry === null ){
+      throw new Error("attendance query was invalid");
+    }
+    const attendanceRows = attendanceEntry.flat();
+    const { attendanceId, createdAt, studentId } = attendanceRows;
 
-  //whoで得た学生のidでaccontからname, emailを取得
-  const whoEntry = await c.env.DB
-  .prepare("SELECT name, email FROM account WHERE id = ?")
-  .bind(studentId)
-  .raw();
-  if ( whoEntry === null ){
-    throw new Error("account query was invalid");
-  }
-  const studentInfo = whoEntry.flat();
-  const { name, email } = studentInfo;
+    //whoで得た学生のidでaccontからname, emailを取得
+    const whoEntry = await c.env.DB
+    .prepare("SELECT name, email FROM account WHERE id = ?")
+    .bind(studentId)
+    .raw();
+    if ( whoEntry === null ){
+      throw new Error("account query was invalid");
+    }
+    const studentInfo = whoEntry.flat();
+    const { name, email } = studentInfo;
 
-  //JSONで返す
-  return c.json({
-    id: attendanceId,
-    created_at: createdAt,
-    who: {
-      id: studentId,
-      name: name,
-      email: email,
-    },
-  })
+    //JSONで返す
+    return c.json({
+      id: attendanceId,
+      created_at: createdAt,
+      who: {
+        id: studentId,
+        name: name,
+        email: email,
+      },
+    })
+  }
+  if ( since !== null ){ //sinceのみ存在
+    const msSince = Date.parse(since);
+    //attendanceのid, created_atを取得
+    const attendanceEntry = await c.env.DB
+    .prepare("SELECT id, created_at , who FROM attendance WHERE created_at >= ?")
+    .bind(msSince)
+    .raw();
+    if ( attendanceEntry === null ){
+      throw new Error("attendance query was invalid");
+    }
+    const attendanceRows = attendanceEntry.flat();
+    const { attendanceId, createdAt, studentId } = attendanceRows;
+
+    //whoで得た学生のidでaccontからname, emailを取得
+    const whoEntry = await c.env.DB
+    .prepare("SELECT name, email FROM account WHERE id = ?")
+    .bind(studentId)
+    .raw();
+    if ( whoEntry === null ){
+      throw new Error("account query was invalid");
+    }
+    const studentInfo = whoEntry.flat();
+    const { name, email } = studentInfo;
+
+    //JSONで返す
+    return c.json({
+      id: attendanceId,
+      created_at: createdAt,
+      who: {
+        id: studentId,
+        name: name,
+        email: email,
+      },
+    })
+  }
+  else if ( since !== null ){ //sinceのみ存在
+    const msSince = Date.parse(since);
+    //attendanceのid, created_atを取得
+    const attendanceEntry = await c.env.DB
+    .prepare("SELECT id, created_at , who FROM attendance WHERE created_at >= ?")
+    .bind(msSince)
+    .raw();
+    if ( attendanceEntry === null ){
+      throw new Error("attendance query was invalid");
+    }
+    const attendanceRows = attendanceEntry.flat();
+    const { attendanceId, createdAt, studentId } = attendanceRows;
+
+    //whoで得た学生のidでaccontからname, emailを取得
+    const whoEntry = await c.env.DB
+    .prepare("SELECT name, email FROM account WHERE id = ?")
+    .bind(studentId)
+    .raw();
+    if ( whoEntry === null ){
+      throw new Error("account query was invalid");
+    }
+    const studentInfo = whoEntry.flat();
+    const { name, email } = studentInfo;
+
+    //JSONで返す
+    return c.json({
+      id: attendanceId,
+      created_at: createdAt,
+      who: {
+        id: studentId,
+        name: name,
+        email: email,
+      },
+    })
+  }
+  else { //sinceのみ存在
+    const msUntil = Date.parse(until);
+    //attendanceのid, created_atを取得
+    const attendanceEntry = await c.env.DB
+    .prepare("SELECT id, created_at , who FROM attendance WHERE created_at <= ?")
+    .bind(msUntil)
+    .raw();
+    if ( attendanceEntry === null ){
+      throw new Error("attendance query was invalid");
+    }
+    const attendanceRows = attendanceEntry.flat();
+    const { attendanceId, createdAt, studentId } = attendanceRows;
+
+    //whoで得た学生のidでaccontからname, emailを取得
+    const whoEntry = await c.env.DB
+    .prepare("SELECT name, email FROM account WHERE id = ?")
+    .bind(studentId)
+    .raw();
+    if ( whoEntry === null ){
+      throw new Error("account query was invalid");
+    }
+    const studentInfo = whoEntry.flat();
+    const { name, email } = studentInfo;
+
+    //JSONで返す
+    return c.json({
+      id: attendanceId,
+      created_at: createdAt,
+      who: {
+        id: studentId,
+        name: name,
+        email: email,
+      },
+    })
+  }
 });
 
 export default app;
