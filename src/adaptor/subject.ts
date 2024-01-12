@@ -1,7 +1,6 @@
 import { ID } from "../model/id";
 import { Subject } from "../model/subject";
 import { SubjectRepository } from "../service/new-subject";
-import { AttendanceBoard } from "../model/attendance-board";
 
 export class D1SubjectRepository implements SubjectRepository {
   constructor(private readonly db: D1Database) {}

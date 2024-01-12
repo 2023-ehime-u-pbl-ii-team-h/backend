@@ -1,7 +1,7 @@
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import type { UnstableDevWorker } from "wrangler";
 import { execSync } from "node:child_process";
 import { rmSync } from "node:fs";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import type { UnstableDevWorker } from "wrangler";
 import { unstable_dev } from "wrangler";
 
 describe("Test D1 Worker endpoint", () => {

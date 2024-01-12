@@ -1,6 +1,6 @@
-import { nanoid } from "nanoid";
 import { Account } from "../model/account";
 import { ID } from "../model/id";
+import { nanoid } from "nanoid";
 
 export interface AccountRepository {
   getAccount(email: string): Promise<Account | null>;

@@ -1,10 +1,10 @@
 import { generatePkceKeys } from "../model/auth";
-import { UAParser } from "ua-parser-js";
+import { Session, Clock } from "../model/session";
 import {
   AccountRepository,
   getOrNewAccount,
 } from "../service/get-or-new-account";
-import { Session, Clock } from "../model/session";
+import { UAParser } from "ua-parser-js";
 
 export const REDIRECT_API_PATH = "/redirect";
 
