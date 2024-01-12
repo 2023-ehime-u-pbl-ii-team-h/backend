@@ -22,6 +22,7 @@ import { z } from "zod";
 import { cors } from "hono/cors";
 import { D1SubjectTeacherRepository } from "./adaptor/subject-teacher";
 import { D1SubjectStudentRepository } from "./adaptor/subject-student";
+import { nextBoardEnd } from "./model/attendance-board";
 
 type Bindings = {
   DB: D1Database;
@@ -275,11 +276,14 @@ app.get("/subjects", async (c) => {
   const teachersBySubject = await new D1SubjectTeacherRepository(
     c.env.DB,
   ).teachersByEachSubject(subjects);
+  const boardsBySubject = await new D1AttendanceBoardRepository(
+    c.env.DB,
+  ).boardsByEachSubject(subjects);
   return c.json(
     subjects.map((subject, index) => ({
       id: subject.id,
       name: subject.name,
-      next_board_end: subject.nextBoardEnd(now),
+      next_board_end: nextBoardEnd(boardsBySubject[index], now),
       assigned: teachersBySubject[index].map(({ name }) => name),
     })),
   );
@@ -296,11 +300,14 @@ app.get("/subjects/:subject_id", async (c) => {
   const [assignees] = await new D1SubjectTeacherRepository(
     c.env.DB,
   ).teachersByEachSubject([subject]);
+  const [boards] = await new D1AttendanceBoardRepository(
+    c.env.DB,
+  ).boardsByEachSubject([subject]);
 
   return c.json({
     name: subject.name,
     assignees,
-    boards: subject.boards.map(
+    boards: boards.map(
       ({
         id,
         startFrom,
