@@ -1,27 +1,28 @@
+import { D1AccountRepository } from "./adaptor/account";
+import { D1AttendanceRepository } from "./adaptor/attendance";
+import { D1AttendanceBoardRepository } from "./adaptor/attendance-board";
+import { MicrosoftGraph } from "./adaptor/microsoft-graph";
+import { MicrosoftOAuth } from "./adaptor/microsoft-oauth";
+import { HonoSessionRepository } from "./adaptor/session";
+import { D1SubjectRepository } from "./adaptor/subject";
+import { D1SubjectStudentRepository } from "./adaptor/subject-student";
+import { D1SubjectTeacherRepository } from "./adaptor/subject-teacher";
+import { Student, Teacher } from "./model/account";
+import { nextBoardEnd } from "./model/attendance-board";
+import { ID } from "./model/id";
+import { Session } from "./model/session";
+import { Subject } from "./model/subject";
+import { attend } from "./service/attend";
+import { REDIRECT_API_PATH, login, loginRedirect } from "./service/login";
+import { newSubject } from "./service/new-subject";
 import { Hono, MiddlewareHandler } from "hono";
 import {
   sessionMiddleware,
   CookieStore,
   Session as HonoSession,
 } from "hono-sessions";
-import { REDIRECT_API_PATH, login, loginRedirect } from "./service/login";
-import { HonoSessionRepository } from "./adaptor/session";
-import { MicrosoftGraph } from "./adaptor/microsoft-graph";
-import { MicrosoftOAuth } from "./adaptor/microsoft-oauth";
-import { D1AccountRepository } from "./adaptor/account";
-import { Session } from "./model/session";
-import { ID } from "./model/id";
-import { Student, Teacher } from "./model/account";
-import { newSubject } from "./service/new-subject";
-import { D1SubjectRepository } from "./adaptor/subject";
-import { attend } from "./service/attend";
-import { D1AttendanceBoardRepository } from "./adaptor/attendance-board";
-import { D1AttendanceRepository } from "./adaptor/attendance";
-import { Subject } from "./model/subject";
-import { z } from "zod";
 import { cors } from "hono/cors";
-import { D1SubjectTeacherRepository } from "./adaptor/subject-teacher";
-import { D1SubjectStudentRepository } from "./adaptor/subject-student";
+import { z } from "zod";
 
 type Bindings = {
   DB: D1Database;
@@ -275,11 +276,14 @@ app.get("/subjects", async (c) => {
   const teachersBySubject = await new D1SubjectTeacherRepository(
     c.env.DB,
   ).teachersByEachSubject(subjects);
+  const boardsBySubject = await new D1AttendanceBoardRepository(
+    c.env.DB,
+  ).boardsByEachSubject(subjects);
   return c.json(
     subjects.map((subject, index) => ({
       id: subject.id,
       name: subject.name,
-      next_board_end: subject.nextBoardEnd(now),
+      next_board_end: nextBoardEnd(boardsBySubject[index], now),
       assigned: teachersBySubject[index].map(({ name }) => name),
     })),
   );
@@ -296,11 +300,14 @@ app.get("/subjects/:subject_id", async (c) => {
   const [assignees] = await new D1SubjectTeacherRepository(
     c.env.DB,
   ).teachersByEachSubject([subject]);
+  const [boards] = await new D1AttendanceBoardRepository(
+    c.env.DB,
+  ).boardsByEachSubject([subject]);
 
   return c.json({
     name: subject.name,
     assignees,
-    boards: subject.boards.map(
+    boards: boards.map(
       ({
         id,
         startFrom,

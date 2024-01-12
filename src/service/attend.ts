@@ -1,9 +1,9 @@
-import { nanoid } from "nanoid";
-import { Session } from "../model/session";
-import { ID } from "../model/id";
 import { Account, Student } from "../model/account";
 import { Attendance } from "../model/attendance";
 import { AttendanceBoard } from "../model/attendance-board";
+import { ID } from "../model/id";
+import { Session } from "../model/session";
+import { nanoid } from "nanoid";
 
 export interface Input {
   ipAddress: string;

@@ -1,6 +1,6 @@
-import { ID } from "./id";
 import { Student } from "./account";
 import { AttendanceBoard } from "./attendance-board";
+import { ID } from "./id";
 
 export type Attendance = {
   readonly id: ID<Attendance>;

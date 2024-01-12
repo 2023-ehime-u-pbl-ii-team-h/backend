@@ -1,5 +1,5 @@
-import { ID } from "./id";
 import { Account } from "./account";
+import { ID } from "./id";
 import { nanoid } from "nanoid";
 
 export class Session {
