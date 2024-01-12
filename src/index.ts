@@ -20,6 +20,7 @@ import { D1AttendanceRepository } from "./adaptor/attendance";
 import { Subject } from "./model/subject";
 import { z } from "zod";
 import { cors } from "hono/cors";
+import { AttendanceBoard } from "./model/attendance-board";
 
 type Bindings = {
   DB: D1Database;
@@ -219,4 +220,66 @@ app.get("/subjects/:subject_id", async (c) => {
     ),
   });
 });
+
+app.get("/subject/:subject_id/:board_id/attendances", async (c) => {
+  //各パラメータの受け取り
+  const { since, until }= c.req.query();
+  const subjectId = c.req.param("subject_id") as ID<Subject>;
+  const boardId = c.req.param("board_id") as ID<AttendanceBoard>;
+
+  //認証する
+  const HonoSession = c.get("session");
+  const login = HonoSession.get("login") as Session | null;
+  if (!login) {
+    return c.text("Unauthorized", 401);
+  }
+
+  //教員かどうかチェックする
+  const accountRepo = new D1AccountRepository(c.env.DB);
+  const accountInfo = await accountRepo.getStudentOrTeacher(login.account.id);
+  if ( !accountInfo ) {
+    throw new Error("account info not found");
+  }
+
+  if ( accountInfo.role != 'TEACHER' ){
+    throw new Error("Your role is not teacher");
+  }
+
+  //DBにアクセスして情報を取得する(sinceとuntilも使う)
+  const msSince = Date.parse(since);
+  const msUntil = Date.parse(until);
+  //attendanceのid, created_atを取得
+  const attendanceEntry = await c.env.DB
+  .prepare("SELECT id, created_at , who FROM attendance WHERE created_at BETWEEN ?1 AND ?2")
+  .bind(msSince, msUntil)
+  .raw();
+  if ( attendanceEntry === null ){
+    throw new Error("attendance query was invalid");
+  }
+  const attendanceRows = attendanceEntry.flat();
+  const { attendanceId, createdAt, studentId } = attendanceRows;
+
+  //whoで得た学生のidでaccontからname, emailを取得
+  const whoEntry = await c.env.DB
+  .prepare("SELECT name, email FROM account WHERE id = ?")
+  .bind(studentId)
+  .raw();
+  if ( whoEntry === null ){
+    throw new Error("account query was invalid");
+  }
+  const studentInfo = whoEntry.flat();
+  const { name, email } = studentInfo;
+
+  //JSONで返す
+  return c.json({
+    id: attendanceId,
+    created_at: createdAt,
+    who: {
+      id: studentId,
+      name: name,
+      email: email,
+    },
+  })
+});
+
 export default app;
