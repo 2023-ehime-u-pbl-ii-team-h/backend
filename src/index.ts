@@ -8,11 +8,13 @@ import { D1SubjectRepository } from "./adaptor/subject";
 import { D1SubjectStudentRepository } from "./adaptor/subject-student";
 import { D1SubjectTeacherRepository } from "./adaptor/subject-teacher";
 import { Student, Teacher } from "./model/account";
+import { Attendance } from "./model/attendance";
 import { nextBoardEnd } from "./model/attendance-board";
 import { ID } from "./model/id";
 import { Session } from "./model/session";
 import { Subject } from "./model/subject";
 import { attend } from "./service/attend";
+import { correctAttendance } from "./service/correct-attendance";
 import { REDIRECT_API_PATH, login, loginRedirect } from "./service/login";
 import { newSubject } from "./service/new-subject";
 import { Hono, MiddlewareHandler } from "hono";
@@ -204,6 +206,46 @@ app.get("/attendances/:course_id", async (c) => {
   );
 
   return c.json(sum);
+});
+
+app.put("/attendances/:attendance_id", async (c) => {
+  const attendanceId = c.req.param("attendance_id") as ID<Attendance>;
+  const honoSession = c.get("session");
+  const session = honoSession.get("login") as Session | null;
+  if (!session) {
+    return c.text("", 401);
+  }
+
+  let jsonBody;
+  try {
+    jsonBody = await c.req.json();
+  } catch {
+    c.req.text().then(console.log);
+    return c.text("", 400);
+  }
+  const schema = z.object({
+    time_to_set: z.string().datetime(),
+  });
+  const parseResult = await schema.safeParseAsync(jsonBody);
+  if (!parseResult.success) {
+    return c.text("", 400);
+  }
+
+  const serviceResult = await correctAttendance({
+    session,
+    target: attendanceId,
+    timeToSet: new Date(parseResult.data.time_to_set),
+    attendanceRepo: new D1AttendanceRepository(c.env.DB),
+    boardRepo: new D1AttendanceBoardRepository(c.env.DB),
+  });
+  switch (serviceResult) {
+    case "BAD_REQUEST":
+      return c.text("", 400);
+    case "UNAUTHORIZED":
+      return c.text("", 401);
+    case "OK":
+      return new Response();
+  }
 });
 
 app.get("/me", async (c) => {

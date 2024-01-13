@@ -9,6 +9,10 @@ export type AttendanceBoard = {
   readonly secondsFromBeLateToEnd: number;
 };
 
+export interface AttendanceBoardRepository {
+  getBoard(boardId: ID<AttendanceBoard>): Promise<AttendanceBoard | null>;
+}
+
 export type AttendanceState = "TOO_EARLY" | "ATTENDED" | "BE_LATE" | "CLOSED";
 
 export function determineState(
