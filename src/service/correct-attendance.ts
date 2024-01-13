@@ -1,17 +1,8 @@
 import { isTeacher } from "../model/account";
-import { Attendance } from "../model/attendance";
-import { AttendanceBoard } from "../model/attendance-board";
+import { Attendance, AttendanceRepository } from "../model/attendance";
+import { AttendanceBoardRepository } from "../model/attendance-board";
 import { ID } from "../model/id";
 import { Session } from "../model/session";
-
-export interface AttendanceRepository {
-  getAttendance(attendanceId: ID<Attendance>): Promise<Attendance | null>;
-  updateAttendance(attendance: Attendance): Promise<void>;
-}
-
-export interface AttendanceBoardRepository {
-  getBoard(boardId: ID<AttendanceBoard>): Promise<AttendanceBoard | null>;
-}
 
 export interface CorrectAttendanceDeps {
   session: Session;
