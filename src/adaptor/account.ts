@@ -1,7 +1,7 @@
 import { Account, Student, Teacher } from "../model/account";
 import { ID } from "../model/id";
 import { StudentQueryService } from "../service/attend";
-import { AccountRepository } from "../service/get-or-new-account";
+import { AccountRepository } from "../service/login";
 import { AccountQueryService } from "../service/new-subject";
 
 export class D1AccountRepository
@@ -36,15 +36,7 @@ export class D1AccountRepository
       string
     >;
 
-    if (role === "STUDENT") {
-      return {
-        id: accountId,
-        name,
-        email,
-        role,
-      };
-    }
-    if (role === "TEACHER") {
+    if (role === "STUDENT" || role === "TEACHER") {
       return {
         id: accountId,
         name,
@@ -70,27 +62,14 @@ export class D1AccountRepository
     return rows.every((row) => row.results.length === 1);
   }
 
-  async createAccount(
-    id: ID<Account>,
-    name: string,
-    email: string,
-    role: "STUDENT" | "TEACHER",
-  ): Promise<Account> {
+  async addAccount({ id, name, email, role }: Account): Promise<boolean> {
     const res = await this.db
       .prepare(
         "INSERT INTO account (id, name, email, role) VALUES (?1, ?2, ?3, ?4)",
       )
       .bind(id, name, email, role)
       .run();
-    if (!res.success) {
-      throw new Error("failed to create account");
-    }
-    return {
-      id,
-      name,
-      email,
-      role,
-    };
+    return res.success;
   }
 
   async selectAccountName(id: ID<Account>): Promise<string> {

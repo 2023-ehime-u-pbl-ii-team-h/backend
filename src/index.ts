@@ -120,6 +120,9 @@ app.post(REDIRECT_API_PATH, async (c) => {
     userRepo: new MicrosoftGraph(),
     accountRepo: new D1AccountRepository(c.env.DB),
     sessionRepo,
+    clock: {
+      now: () => new Date(),
+    },
   });
   return c.redirect(redirectUrl);
 });
