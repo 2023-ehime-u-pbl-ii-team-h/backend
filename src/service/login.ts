@@ -74,6 +74,7 @@ export interface LoginRedirectDeps {
   userRepo: UserRepository;
   accountRepo: AccountRepository;
   sessionRepo: LoginRepository;
+  clock: Clock;
 }
 
 export async function loginRedirect({
@@ -83,6 +84,7 @@ export async function loginRedirect({
   userRepo,
   accountRepo,
   sessionRepo,
+  clock,
 }: LoginRedirectDeps): Promise<string> {
   const verifier = await verifierRepo.load();
   await verifierRepo.store("");
@@ -107,9 +109,6 @@ export async function loginRedirect({
     await accountRepo.addAccount(creatingAccount);
     account = creatingAccount;
   }
-  const clock: Clock = {
-    now: () => new Date(),
-  };
   const newSession = Session.newSession(
     clock,
     account,
