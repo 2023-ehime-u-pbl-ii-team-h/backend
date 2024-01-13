@@ -7,6 +7,7 @@ import { HonoSessionRepository } from "./adaptor/session";
 import { D1SubjectRepository } from "./adaptor/subject";
 import { D1SubjectStudentRepository } from "./adaptor/subject-student";
 import { D1SubjectTeacherRepository } from "./adaptor/subject-teacher";
+import { loginMiddleware } from "./middleware/login";
 import { Student, Teacher, isStudent } from "./model/account";
 import { Attendance } from "./model/attendance";
 import { nextBoardEnd } from "./model/attendance-board";
@@ -26,6 +27,9 @@ import {
 import { cors } from "hono/cors";
 import { z } from "zod";
 
+const EXPIRE_AFTER_SECONDS = 300;
+const IGNORE = ["/login", REDIRECT_API_PATH, "/logout"];
+
 type Bindings = {
   DB: D1Database;
   COOKIE_SECRET: string;
@@ -44,8 +48,6 @@ const app = new Hono<{
 
 const store = new CookieStore();
 
-const EXPIRE_AFTER_SECONDS = 300;
-
 app.use("*", (c, next) => {
   const middleware = sessionMiddleware({
     store,
@@ -58,35 +60,7 @@ app.use("*", (c, next) => {
   return middleware(c, next);
 });
 
-app.use("*", async (c, next) => {
-  const IGNORE = ["/login", REDIRECT_API_PATH, "/logout"];
-  if (!IGNORE.includes(c.req.path)) {
-    const session = c.get("session");
-    const login = session.get("login") as Session | null;
-    if (!login) {
-      return c.text("", 401);
-    }
-
-    const loginAt = await c.env.DB.prepare(
-      "SELECT login_at FROM session WHERE id = ?1",
-    )
-      .bind(login.id)
-      .first<number>("login_at");
-    if (!loginAt) {
-      return c.text("", 401);
-    }
-
-    const isExpired = !(loginAt + EXPIRE_AFTER_SECONDS < Date.now() / 1000);
-    if (isExpired) {
-      await c.env.DB.prepare("DELETE FROM session WHERE id = ?1")
-        .bind(login.id)
-        .run();
-      return c.text("", 401);
-    }
-    c.set("login", login);
-  }
-  return next();
-});
+app.use("*", loginMiddleware(EXPIRE_AFTER_SECONDS, IGNORE));
 
 app.use(
   "*",
