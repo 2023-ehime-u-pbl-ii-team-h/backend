@@ -145,11 +145,17 @@ app.post("/subjects", async (c) => {
   const session = c.get("session");
   const login = session.get("login") as Session;
 
+  let jsonBody;
+  try {
+    jsonBody = await c.req.json();
+  } catch {
+    return c.text("", 400);
+  }
   const schema = z.object({
     name: z.string().min(1),
     assignees: z.array(z.string().min(1)).min(1),
   });
-  const result = await schema.safeParseAsync(await c.req.json());
+  const result = await schema.safeParseAsync(jsonBody);
   if (!result.success) {
     return c.text("Bad Request", 400);
   }
