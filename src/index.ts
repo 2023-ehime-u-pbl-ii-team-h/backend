@@ -7,7 +7,7 @@ import { HonoSessionRepository } from "./adaptor/session";
 import { D1SubjectRepository } from "./adaptor/subject";
 import { D1SubjectStudentRepository } from "./adaptor/subject-student";
 import { D1SubjectTeacherRepository } from "./adaptor/subject-teacher";
-import { Student, Teacher } from "./model/account";
+import { Student, Teacher, isStudent } from "./model/account";
 import { Attendance } from "./model/attendance";
 import { nextBoardEnd } from "./model/attendance-board";
 import { ID } from "./model/id";
@@ -38,6 +38,7 @@ const app = new Hono<{
   Variables: {
     session: HonoSession;
     session_key_rotation: boolean;
+    login: Session;
   };
 }>();
 
@@ -82,6 +83,7 @@ app.use("*", async (c, next) => {
         .run();
       return c.text("", 401);
     }
+    c.set("login", login);
   }
   return next();
 });
@@ -142,8 +144,7 @@ app.post("/logout", async (c) => {
 });
 
 app.post("/subjects", async (c) => {
-  const session = c.get("session");
-  const login = session.get("login") as Session;
+  const login = c.get("login");
 
   let jsonBody;
   try {
@@ -177,8 +178,7 @@ app.post("/subjects", async (c) => {
 });
 
 app.post("/attendances", async (c) => {
-  const session = c.get("session");
-  const login = session.get("login") as Session;
+  const login = c.get("login");
   await attend({
     input: {
       ipAddress: c.req.header("cf-connecting-ip") ?? "",
@@ -199,12 +199,8 @@ app.post("/attendances", async (c) => {
 });
 
 app.get("/attendances/:course_id", async (c) => {
+  const session = c.get("login");
   const subjectId = c.req.param("course_id") as ID<Subject>;
-  const honoSession = c.get("session");
-  const session = honoSession.get("login") as Session | null;
-  if (!session) {
-    return c.text("Unauthorized", 401);
-  }
 
   const sum = await new D1AttendanceRepository(c.env.DB).sumAttendances(
     session.account.id as ID<Student>,
@@ -216,11 +212,7 @@ app.get("/attendances/:course_id", async (c) => {
 
 app.put("/attendances/:attendance_id", async (c) => {
   const attendanceId = c.req.param("attendance_id") as ID<Attendance>;
-  const honoSession = c.get("session");
-  const session = honoSession.get("login") as Session | null;
-  if (!session) {
-    return c.text("", 401);
-  }
+  const session = c.get("login");
 
   let jsonBody;
   try {
@@ -255,12 +247,7 @@ app.put("/attendances/:attendance_id", async (c) => {
 });
 
 app.get("/me", async (c) => {
-  const HonoSession = c.get("session");
-  const login = HonoSession.get("login") as Session | null;
-  if (!login) {
-    return c.text("Unauthorized", 401);
-  }
-
+  const login = c.get("login");
   const repo = new D1AccountRepository(c.env.DB);
   const name = await repo.selectAccountName(login.account.id);
   const info = await repo.getStudentOrTeacher(login.account.id);
@@ -293,9 +280,8 @@ app.get("/me", async (c) => {
 });
 
 app.put("/me/registrations/:subject_id", async (c) => {
-  const HonoSession = c.get("session");
-  const login = HonoSession.get("login") as Session | null;
-  if (!login || login.account.role !== "STUDENT") {
+  const login = c.get("login");
+  if (!isStudent(login.account)) {
     return c.text("", 401);
   }
 
@@ -373,4 +359,5 @@ app.get("/subjects/:subject_id", async (c) => {
     ),
   });
 });
+
 export default app;
