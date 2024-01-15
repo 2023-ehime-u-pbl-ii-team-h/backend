@@ -246,13 +246,7 @@ app.get("/subject/:subject_id/:board_id/attendances", async (c) => {
   }
 
   //教員かどうかチェックする
-  const accountRepo = new D1AccountRepository(c.env.DB);
-  const accountInfo = await accountRepo.getStudentOrTeacher(login.account.id);
-  if ( !accountInfo ) {
-    return c.text("Unauthorized", 401);
-  }
-
-  if ( accountInfo.role != 'TEACHER' ){
+  if ( login.account.role !== "TEACHER" ){
     return c.text("Unauthorized", 401);
   }
 
