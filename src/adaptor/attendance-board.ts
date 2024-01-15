@@ -40,7 +40,7 @@ export class D1AttendanceBoardRepository
 
   async boardsByEachSubject(subjects: Subject[]): Promise<AttendanceBoard[][]> {
     const selectBoard = this.db.prepare(
-      "SELECT id, subject_id, start_from, seconds_from_start_to_be_late, seconds_from_be_late_to_end FROM attendance_board WHERE subject_id = ?1",
+      "SELECT id, subject_id, start_from, seconds_from_start_to_be_late, seconds_from_be_late_to_end FROM attendance_board WHERE subject_id = ?1 ORDER BY start_from DESC",
     );
     return (
       await this.db.batch<{
