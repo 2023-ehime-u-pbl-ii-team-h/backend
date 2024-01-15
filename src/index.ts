@@ -233,14 +233,13 @@ function sinceAndUntilSetting(since: string = '0001-01-01T00:00:00', until: stri
   return { secondsSince, secondsUntil }
 }
 
-app.get("/subject/:subject_id/:board_id/attendances", async (c) => {
+app.get("/subjects/:subject_id/:board_id/attendances", async (c) => {
   //各パラメータの受け取り
   const { since, until }= c.req.query();
   const boardId = c.req.param("board_id");
 
   //認証する
-  const HonoSession = c.get("session");
-  const login = HonoSession.get("login") as Session | null;
+  const login = c.get("login");
   if (!login) {
     return c.text("Unauthorized", 401);
   }
