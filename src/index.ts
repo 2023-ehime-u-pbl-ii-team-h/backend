@@ -221,16 +221,16 @@ app.get("/subjects/:subject_id", async (c) => {
   });
 });
 
-async function sinceAndUntilSetting(since: string = '2000-01-01T00:00:00', until: string = '3000-01-01T00:00:00'): Promise<any>{
+function sinceAndUntilSetting(since: string = '0001-01-01T00:00:00', until: string = '9999-12-31T23:59:59'): { secondsSince: number; secondsUntil: number; } | null {
   const msSince = Date.parse(since);
   const msUntil = Date.parse(until);
-  if ( isNaN(msSince) || isNaN(msUntil) ){
-    throw new Error("since or until are invalid");
+  if ( Number.isNaN(msSince) || Number.isNaN(msUntil) ){
+    return null;
   }
   const secondsSince = Math.floor(msSince / 1000);
   const secondsUntil = Math.floor(msUntil / 1000);
 
-  return { secondsSince: secondsSince, secondsUntil: secondsUntil }
+  return { secondsSince, secondsUntil }
 }
 
 app.get("/subject/:subject_id/:board_id/attendances", async (c) => {
@@ -257,28 +257,37 @@ app.get("/subject/:subject_id/:board_id/attendances", async (c) => {
   }
 
   //sinceとuntilを設定する
-  const { secondsSince, secondsUntil } = await sinceAndUntilSetting(since, until);
+  const parsed = sinceAndUntilSetting(since, until);
+  if ( parsed === null ){
+    return c.text("Bad Request", 400);
+  }
+  const { secondsSince, secondsUntil } = parsed;
 
   //DBにアクセスしてattendanceのid, created_atを取得
-  const attendanceEntry = await c.env.DB
-  .prepare("SELECT id, created_at FROM attendance WHERE created_at BETWEEN ?1 AND ?2 AND 'where' = ?3")
+  const attendanceAndAccountEntry = await c.env.DB
+  .prepare(`
+    SELECT attendance.id, attendance.created_at, account.id as student_id, account.name, account.email
+    FROM attendance
+    INNER JOIN account
+      ON attendance.who = account.id
+    WHERE attendance.created_at BETWEEN ?1 AND ?2 AND attendance."where" = ?3`)
   .bind(secondsSince, secondsUntil, boardId)
   .all();
-  if ( attendanceEntry === null ){
+  const { results } = attendanceAndAccountEntry;
+  if ( results === null ){
     throw new Error("attendance query was invalid");
   }
-  const { attendanceId, createdAt } = attendanceEntry;
 
   //JSONで返す
-  return c.json({
-    id: attendanceId,
-    created_at: createdAt,
+  return c.json(results.map(({ id, created_at, student_id, name, email }) => ({
+    id,
+    created_at,
     who: {
-      id: login.account.id,
-      name: login.account.name,
-      email: login.account.email,
+      id: student_id,
+      name,
+      email,
     },
-  });
+  })));
 });
 
 export default app;
