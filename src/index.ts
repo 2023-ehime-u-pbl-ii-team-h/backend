@@ -8,7 +8,7 @@ import { D1SubjectRepository } from "./adaptor/subject";
 import { D1SubjectStudentRepository } from "./adaptor/subject-student";
 import { D1SubjectTeacherRepository } from "./adaptor/subject-teacher";
 import { loginMiddleware } from "./middleware/login";
-import { Student, Teacher, isStudent } from "./model/account";
+import { Student, Teacher, isStudent, isTeacher } from "./model/account";
 import { Attendance } from "./model/attendance";
 import { nextBoardEnd } from "./model/attendance-board";
 import { ID } from "./model/id";
@@ -251,6 +251,33 @@ app.get("/me", async (c) => {
     default:
       throw new Error("unreachable");
   }
+});
+
+app.get("/me/subjects", async (c) => {
+  const login = c.get("login");
+  let subjects: Subject[];
+  if (isStudent(login.account)) {
+    [subjects] = await new D1SubjectStudentRepository(
+      c.env.DB,
+    ).subjectsByEachStudent([login.account]);
+  } else if (isTeacher(login.account)) {
+    [subjects] = await new D1SubjectTeacherRepository(
+      c.env.DB,
+    ).subjectsByEachTeacher([login.account]);
+  } else {
+    throw new Error(`unknown role: ${login.account.role}`);
+  }
+
+  const latestBoards = await new D1AttendanceBoardRepository(
+    c.env.DB,
+  ).boardsByEachSubject(subjects);
+  return c.json(
+    subjects.map(({ id, name }, index) => ({
+      id,
+      name,
+      lastDate: latestBoards[index][0]?.startFrom.toISOString() ?? "",
+    })),
+  );
 });
 
 app.put("/me/registrations/:subject_id", async (c) => {
