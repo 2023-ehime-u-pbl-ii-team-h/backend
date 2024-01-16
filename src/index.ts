@@ -1,6 +1,7 @@
 import { D1AccountRepository } from "./adaptor/account";
 import { D1AttendanceRepository } from "./adaptor/attendance";
 import { D1AttendanceBoardRepository } from "./adaptor/attendance-board";
+import { D1AttendanceStudentRepository } from "./adaptor/attendance-student";
 import { MicrosoftGraph } from "./adaptor/microsoft-graph";
 import { MicrosoftOAuth } from "./adaptor/microsoft-oauth";
 import { HonoSessionRepository } from "./adaptor/session";
@@ -361,66 +362,45 @@ app.get("/subjects/:subject_id", async (c) => {
   });
 });
 
-function sinceAndUntilSetting(since: string = '0001-01-01T00:00:00', until: string = '9999-12-31T23:59:59'): { secondsSince: number; secondsUntil: number; } | null {
-  const msSince = Date.parse(since);
-  const msUntil = Date.parse(until);
-  if ( Number.isNaN(msSince) || Number.isNaN(msUntil) ){
-    return null;
-  }
-  const secondsSince = Math.floor(msSince / 1000);
-  const secondsUntil = Math.floor(msUntil / 1000);
-
-  return { secondsSince, secondsUntil }
-}
-
-app.get("/subjects/:subject_id/:board_id/attendances", async (c) => {
-  //各パラメータの受け取り
-  const { since, until }= c.req.query();
-  const boardId = c.req.param("board_id");
-
-  //認証する
+app.get("/subjects/:subject_id/boards/:board_id/attendances", async (c) => {
   const login = c.get("login");
   if (!login) {
     return c.text("Unauthorized", 401);
   }
-
-  //教員かどうかチェックする
-  if ( login.account.role !== "TEACHER" ){
+  if (login.account.role !== "TEACHER") {
     return c.text("Unauthorized", 401);
   }
 
-  //sinceとuntilを設定する
-  const parsed = sinceAndUntilSetting(since, until);
-  if ( parsed === null ){
-    return c.text("Bad Request", 400);
-  }
-  const { secondsSince, secondsUntil } = parsed;
-
-  //DBにアクセスしてattendanceのid, created_atを取得
-  const attendanceAndAccountEntry = await c.env.DB
-  .prepare(`
-    SELECT attendance.id, attendance.created_at, account.id as student_id, account.name, account.email
-    FROM attendance
-    INNER JOIN account
-      ON attendance.who = account.id
-    WHERE attendance.created_at BETWEEN ?1 AND ?2 AND attendance."where" = ?3`)
-  .bind(secondsSince, secondsUntil, boardId)
-  .all();
-  const { results } = attendanceAndAccountEntry;
-  if ( results === null ){
-    throw new Error("attendance query was invalid");
+  const schema = z.object({
+    since: z.string().datetime().optional(),
+    until: z.string().datetime().optional(),
+  });
+  const parseResult = await schema.safeParseAsync(c.req.query());
+  if (!parseResult.success) {
+    return c.text("", 400);
   }
 
-  //JSONで返す
-  return c.json(results.map(({ id, created_at, student_id, name, email }) => ({
-    id,
-    created_at,
-    who: {
-      id: student_id,
-      name,
-      email,
-    },
-  })));
+  const { since = "0001-01-01T00:00:00", until = "9999-12-31T23:59:59" } =
+    parseResult.data;
+  const attendanceAndStudents = await new D1AttendanceStudentRepository(
+    c.env.DB,
+  ).getAttendancesBetween(
+    c.req.param("board_id") as ID<AttendanceBoard>,
+    new Date(since),
+    new Date(until),
+  );
+
+  return c.json(
+    attendanceAndStudents.map(([attendance, student]) => ({
+      id: attendance.id,
+      created_at: attendance.created_at,
+      who: {
+        id: student.id,
+        name: student.name,
+        email: student.email,
+      },
+    })),
+  );
 });
 
 export default app;
