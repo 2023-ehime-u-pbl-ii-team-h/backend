@@ -1,10 +1,7 @@
+import { Account, newAccount } from "../model/account";
 import { generatePkceKeys } from "../model/auth";
-import { UAParser } from "ua-parser-js";
-import {
-  AccountRepository,
-  getOrNewAccount,
-} from "../service/get-or-new-account";
 import { Session, Clock } from "../model/session";
+import { UAParser } from "ua-parser-js";
 
 export const REDIRECT_API_PATH = "/redirect";
 
@@ -61,6 +58,11 @@ export interface UserRepository {
   getMe(token: string): Promise<{ email: string; name: string }>;
 }
 
+export interface AccountRepository {
+  getAccount(email: string): Promise<Account | null>;
+  addAccount(account: Account): Promise<boolean>;
+}
+
 export interface LoginRepository {
   createLoginSession(newSession: Session): Promise<void>;
 }
@@ -72,6 +74,7 @@ export interface LoginRedirectDeps {
   userRepo: UserRepository;
   accountRepo: AccountRepository;
   sessionRepo: LoginRepository;
+  clock: Clock;
 }
 
 export async function loginRedirect({
@@ -81,6 +84,7 @@ export async function loginRedirect({
   userRepo,
   accountRepo,
   sessionRepo,
+  clock,
 }: LoginRedirectDeps): Promise<string> {
   const verifier = await verifierRepo.load();
   await verifierRepo.store("");
@@ -96,17 +100,19 @@ export async function loginRedirect({
   const parser = new UAParser(query.userAgent);
   const parserResults = parser.getResult();
 
-  const account = await getOrNewAccount(accountRepo, email, name);
+  let account = await accountRepo.getAccount(email);
   if (!account) {
-    throw new Error("failure to get account");
+    const creatingAccount = newAccount(name, email);
+    if (!creatingAccount) {
+      throw new Error("account verification failed");
+    }
+    await accountRepo.addAccount(creatingAccount);
+    account = creatingAccount;
   }
-  const clock: Clock = {
-    now: () => new Date(),
-  };
   const newSession = Session.newSession(
     clock,
     account,
-    parserResults.device.type ?? "" + parserResults.browser.name ?? "",
+    (parserResults.device.type ?? "") + (parserResults.browser.name ?? ""),
   );
   sessionRepo.createLoginSession(newSession);
   return query.returnUrl;

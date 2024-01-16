@@ -1,8 +1,9 @@
-import { Student } from "../model/account";
+import { Account, Student } from "../model/account";
 import { Attendance } from "../model/attendance";
+import { AttendanceRepository } from "../model/attendance";
+import { AttendanceBoard } from "../model/attendance-board";
 import { ID } from "../model/id";
 import { Subject } from "../model/subject";
-import { AttendanceRepository } from "../service/attend";
 
 export interface AttendancesSum {
   onTime: number;
@@ -31,6 +32,30 @@ export class D1AttendanceRepository implements AttendanceRepository {
           newAttendance,
         )}\n${JSON.stringify(result.error)}`,
       );
+    }
+  }
+
+  getAttendance(attendanceId: ID<Attendance>): Promise<Attendance | null> {
+    return this.db
+      .prepare(
+        'SELECT id, created_at, who, "where" FROM attendance WHERE id = ?1',
+      )
+      .bind(attendanceId)
+      .first<{
+        id: ID<Attendance>;
+        created_at: number;
+        who: ID<Student>;
+        where: ID<AttendanceBoard>;
+      }>();
+  }
+
+  async updateAttendance(attendance: Attendance): Promise<void> {
+    const result = await this.db
+      .prepare("UPDATE attendance SET created_at = ?1 WHERE id = ?2")
+      .bind(attendance.created_at, attendance.id)
+      .run();
+    if (!result.success) {
+      throw new Error("update attendance failed");
     }
   }
 
