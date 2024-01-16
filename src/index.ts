@@ -10,7 +10,7 @@ import { D1SubjectTeacherRepository } from "./adaptor/subject-teacher";
 import { loginMiddleware } from "./middleware/login";
 import { Student, Teacher, isStudent, isTeacher } from "./model/account";
 import { Attendance } from "./model/attendance";
-import { nextBoardEnd } from "./model/attendance-board";
+import { AttendanceBoard, nextBoardEnd } from "./model/attendance-board";
 import { ID } from "./model/id";
 import { Session } from "./model/session";
 import { Subject } from "./model/subject";
@@ -359,6 +359,68 @@ app.get("/subjects/:subject_id", async (c) => {
       }),
     ),
   });
+});
+
+function sinceAndUntilSetting(since: string = '0001-01-01T00:00:00', until: string = '9999-12-31T23:59:59'): { secondsSince: number; secondsUntil: number; } | null {
+  const msSince = Date.parse(since);
+  const msUntil = Date.parse(until);
+  if ( Number.isNaN(msSince) || Number.isNaN(msUntil) ){
+    return null;
+  }
+  const secondsSince = Math.floor(msSince / 1000);
+  const secondsUntil = Math.floor(msUntil / 1000);
+
+  return { secondsSince, secondsUntil }
+}
+
+app.get("/subjects/:subject_id/:board_id/attendances", async (c) => {
+  //各パラメータの受け取り
+  const { since, until }= c.req.query();
+  const boardId = c.req.param("board_id");
+
+  //認証する
+  const login = c.get("login");
+  if (!login) {
+    return c.text("Unauthorized", 401);
+  }
+
+  //教員かどうかチェックする
+  if ( login.account.role !== "TEACHER" ){
+    return c.text("Unauthorized", 401);
+  }
+
+  //sinceとuntilを設定する
+  const parsed = sinceAndUntilSetting(since, until);
+  if ( parsed === null ){
+    return c.text("Bad Request", 400);
+  }
+  const { secondsSince, secondsUntil } = parsed;
+
+  //DBにアクセスしてattendanceのid, created_atを取得
+  const attendanceAndAccountEntry = await c.env.DB
+  .prepare(`
+    SELECT attendance.id, attendance.created_at, account.id as student_id, account.name, account.email
+    FROM attendance
+    INNER JOIN account
+      ON attendance.who = account.id
+    WHERE attendance.created_at BETWEEN ?1 AND ?2 AND attendance."where" = ?3`)
+  .bind(secondsSince, secondsUntil, boardId)
+  .all();
+  const { results } = attendanceAndAccountEntry;
+  if ( results === null ){
+    throw new Error("attendance query was invalid");
+  }
+
+  //JSONで返す
+  return c.json(results.map(({ id, created_at, student_id, name, email }) => ({
+    id,
+    created_at,
+    who: {
+      id: student_id,
+      name,
+      email,
+    },
+  })));
 });
 
 export default app;
