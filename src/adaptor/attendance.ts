@@ -1,4 +1,4 @@
-import { Account, Student } from "../model/account";
+import { Student } from "../model/account";
 import { Attendance } from "../model/attendance";
 import { AttendanceRepository } from "../model/attendance";
 import { AttendanceBoard } from "../model/attendance-board";
