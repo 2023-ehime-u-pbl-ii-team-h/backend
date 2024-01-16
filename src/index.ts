@@ -118,40 +118,6 @@ app.post("/logout", async (c) => {
   return new Response();
 });
 
-app.post("/subjects", async (c) => {
-  const login = c.get("login");
-
-  let jsonBody;
-  try {
-    jsonBody = await c.req.json();
-  } catch {
-    return c.text("", 400);
-  }
-  const schema = z.object({
-    name: z.string().min(1),
-    assignees: z.array(z.string().min(1)).min(1),
-  });
-  const result = await schema.safeParseAsync(jsonBody);
-  if (!result.success) {
-    return c.text("Bad Request", 400);
-  }
-  const { name, assignees } = result.data;
-
-  const ret = await newSubject({
-    session: login,
-    params: {
-      name,
-      assignees: assignees as ID<Teacher>[],
-    },
-    query: new D1AccountRepository(c.env.DB),
-    repo: new D1SubjectRepository(c.env.DB),
-  });
-  if (ret === null) {
-    return c.text("Bad Request", 400);
-  }
-  return c.json(ret);
-});
-
 app.post("/attendances", async (c) => {
   const login = c.get("login");
   await attend({
@@ -171,18 +137,6 @@ app.post("/attendances", async (c) => {
   });
 
   return new Response();
-});
-
-app.get("/attendances/:course_id", async (c) => {
-  const session = c.get("login");
-  const subjectId = c.req.param("course_id") as ID<Subject>;
-
-  const sum = await new D1AttendanceRepository(c.env.DB).sumAttendances(
-    session.account.id as ID<Student>,
-    subjectId,
-  );
-
-  return c.json(sum);
 });
 
 app.put("/attendances/:attendance_id", async (c) => {
@@ -328,6 +282,40 @@ app.get("/subjects", async (c) => {
   );
 });
 
+app.post("/subjects", async (c) => {
+  const login = c.get("login");
+
+  let jsonBody;
+  try {
+    jsonBody = await c.req.json();
+  } catch {
+    return c.text("", 400);
+  }
+  const schema = z.object({
+    name: z.string().min(1),
+    assignees: z.array(z.string().min(1)).min(1),
+  });
+  const result = await schema.safeParseAsync(jsonBody);
+  if (!result.success) {
+    return c.text("Bad Request", 400);
+  }
+  const { name, assignees } = result.data;
+
+  const ret = await newSubject({
+    session: login,
+    params: {
+      name,
+      assignees: assignees as ID<Teacher>[],
+    },
+    query: new D1AccountRepository(c.env.DB),
+    repo: new D1SubjectRepository(c.env.DB),
+  });
+  if (ret === null) {
+    return c.text("Bad Request", 400);
+  }
+  return c.json(ret);
+});
+
 app.get("/subjects/:subject_id", async (c) => {
   const subjectId = c.req.param("subject_id") as ID<Subject>;
 
@@ -360,6 +348,18 @@ app.get("/subjects/:subject_id", async (c) => {
       }),
     ),
   });
+});
+
+app.get("/subjects/:subject_id/all_attendances", async (c) => {
+  const session = c.get("login");
+  const subjectId = c.req.param("subject_id") as ID<Subject>;
+
+  const sum = await new D1AttendanceRepository(c.env.DB).sumAttendances(
+    session.account.id as ID<Student>,
+    subjectId,
+  );
+
+  return c.json(sum);
 });
 
 app.get("/subjects/:subject_id/boards/:board_id/attendances", async (c) => {
