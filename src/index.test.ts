@@ -10,15 +10,18 @@ describe("Test D1 Worker endpoint", () => {
   beforeAll(async () => {
     try {
       rmSync(".wrangler", { recursive: true, force: true });
-      execSync("wrangler d1 migrations apply attend-stamp --local");
       execSync(
-        "wrangler d1 execute attend-stamp --local --file=tests/simple-case.sql",
+        "wrangler d1 migrations apply attend-stamp-staging --local --env staging",
+      );
+      execSync(
+        "wrangler d1 execute attend-stamp-staging --local --file=tests/simple-case.sql --env staging",
       );
     } catch (ignore) {
       console.error(ignore);
     }
 
     worker = await unstable_dev("src/index.ts", {
+      env: "staging",
       experimental: { disableExperimentalWarning: true },
     });
   });
