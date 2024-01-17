@@ -1,4 +1,4 @@
-name: Deploy Worker
+name: Production Deploy Worker
 on:
   push:
     branches:
@@ -18,3 +18,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          environment: production
