@@ -3,15 +3,23 @@ main = "src/index.ts"
 
 compatibility_date = "2022-11-22"
 
-[vars]
-COOKIE_SECRET = "XFS2DVYZskm4g9EXqRJFrwFcftqm0FWk9hicznhhhQ4"
-ALLOW_IP_REGEX = "^133\\.71\\.210\\.43$"
-
 [env.staging.vars]
+ENVIRONMENT = "staging"
 COOKIE_SECRET = "XFS2DVYZskm4g9EXqRJFrwFcftqm0FWk9hicznhhhQ4"
 ALLOW_IP_REGEX = "^.*$"
 
-[[d1_databases]]
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "attend-stamp-staging"
+database_id = "08b2f290-00d8-47a7-8c11-f25225065fa8"
+preview_database_id = "attend-stamp-staging-preview"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+COOKIE_SECRET = "XFS2DVYZskm4g9EXqRJFrwFcftqm0FWk9hicznhhhQ4"
+ALLOW_IP_REGEX = "^133\\.71\\.210\\.43$"
+
+[[env.production.d1_databases]]
 binding = "DB"
 database_name = "attend-stamp"
 database_id = "f4993fbe-c093-4b99-b553-4ecdadf39775"
