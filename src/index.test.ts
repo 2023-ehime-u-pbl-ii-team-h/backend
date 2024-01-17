@@ -21,6 +21,7 @@ describe("Test D1 Worker endpoint", () => {
     }
 
     worker = await unstable_dev("src/index.ts", {
+      env: "staging",
       experimental: { disableExperimentalWarning: true },
     });
   });
