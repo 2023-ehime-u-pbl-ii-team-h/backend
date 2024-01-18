@@ -1,14 +1,14 @@
 DELETE FROM
-    account;
-
-DELETE FROM
-    subject;
-
-DELETE FROM
-    charge;
+    "session";
 
 DELETE FROM
     registration;
 
 DELETE FROM
-    "session";
+    charge;
+
+DELETE FROM
+    subject;
+
+DELETE FROM
+    account;
