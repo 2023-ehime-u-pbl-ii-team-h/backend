@@ -27,8 +27,6 @@ import {
 } from "hono-sessions";
 import { cors } from "hono/cors";
 import { nanoid } from "nanoid";
-import { I } from "vitest/dist/reporters-O4LBziQ_";
-import { boolean, z } from "zod";
 
 const EXPIRE_AFTER_SECONDS = 300;
 const IGNORE = ["/login", REDIRECT_API_PATH, "/logout"];
@@ -461,8 +459,6 @@ app.post("/attendance_board", async (c) => {
   );
 
   const rows = await c.env.DB.batch(statements);
-
-  rows.every((row) => row.success);
   if (!rows.every((row) => row.success)) {
     throw new Error("insert borads failed");
   }
