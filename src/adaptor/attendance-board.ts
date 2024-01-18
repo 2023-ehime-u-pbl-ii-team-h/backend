@@ -112,4 +112,29 @@ export class D1AttendanceBoardRepository
     }
     throw new Error("expected `id` row in `attendance_board` is a string");
   }
+
+  async insertBoards(boards: readonly AttendanceBoard[]): Promise<boolean> {
+    const statement = this.db.prepare(
+      "insert into attendance_board(id, subject_id, start_from, seconds_from_start_to_be_late, seconds_from_be_late_to_end) values (?1, ?2, ?3, ?4 ,?5)",
+    );
+    const statements = boards.map(
+      ({
+        id,
+        subject,
+        startFrom,
+        secondsFromStartToBeLate,
+        secondsFromBeLateToEnd,
+      }) =>
+        statement.bind(
+          id,
+          subject,
+          startFrom,
+          secondsFromStartToBeLate,
+          secondsFromBeLateToEnd,
+        ),
+    );
+
+    const rows = await this.db.batch(statements);
+    return rows.every((row) => row.success);
+  }
 }
