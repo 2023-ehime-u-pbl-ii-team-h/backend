@@ -26,6 +26,7 @@ import {
   Session as HonoSession,
 } from "hono-sessions";
 import { cors } from "hono/cors";
+import { nanoid } from "nanoid";
 import { z } from "zod";
 
 const EXPIRE_AFTER_SECONDS = 300;
@@ -401,6 +402,68 @@ app.get("/subjects/:subject_id/boards/:board_id/attendances", async (c) => {
       },
     })),
   );
+});
+
+app.post("/attendance_board", async (c) => {
+  const reqBody = await c.req.json();
+  const schema = z.object({
+    subject: z.string().min(1),
+    boards: z
+      .array(
+        z.object({
+          startFrom: z.string().datetime(),
+          secondsFromStartToBeLate: z.number().int().positive(),
+          secondsFromBeLateToEnd: z.number().int().positive(),
+        }),
+      )
+      .min(1),
+  });
+  const result = await schema.safeParseAsync(reqBody);
+  if (!result.success) {
+    return c.text("Bad Request", 400);
+  }
+  const { subject, boards: boardParams } = result.data;
+
+  const boards = boardParams.map(
+    ({
+      startFrom,
+      secondsFromStartToBeLate,
+      secondsFromBeLateToEnd,
+    }): AttendanceBoard => ({
+      id: nanoid() as ID<AttendanceBoard>,
+      subject: subject as ID<Subject>,
+      startFrom: new Date(startFrom),
+      secondsFromStartToBeLate,
+      secondsFromBeLateToEnd,
+    }),
+  );
+  boards.sort((a, b) => a.startFrom.getTime() - b.startFrom.getTime());
+
+  const statement = c.env.DB.prepare(
+    "insert into attendance_board(id, subject_id, start_from, seconds_from_start_to_be_late, seconds_from_be_late_to_end) values (?1, ?2, ?3, ?4 ,?5)",
+  );
+  const statements = boards.map(
+    ({
+      id,
+      subject,
+      startFrom,
+      secondsFromStartToBeLate,
+      secondsFromBeLateToEnd,
+    }) =>
+      statement.bind(
+        id,
+        subject,
+        startFrom,
+        secondsFromStartToBeLate,
+        secondsFromBeLateToEnd,
+      ),
+  );
+
+  const rows = await c.env.DB.batch(statements);
+  if (!rows.every((row) => row.success)) {
+    throw new Error("insert boards failed");
+  }
+  return c.json({ ids: boards.map((board) => board.id) });
 });
 
 export default app;
