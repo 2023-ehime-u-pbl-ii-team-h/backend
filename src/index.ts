@@ -461,7 +461,7 @@ app.post("/attendance_board", async (c) => {
 
   const rows = await c.env.DB.batch(statements);
   if (!rows.every((row) => row.success)) {
-    throw new Error("insert borads failed");
+    throw new Error("insert boards failed");
   }
   return c.json({ ids: boards.map((board) => board.id) });
 });
