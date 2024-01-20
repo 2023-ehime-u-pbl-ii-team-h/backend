@@ -43,7 +43,7 @@ export async function newSubject({
   }
 
   const newSubjectID = nanoid() as ID<Subject>;
-  await repo.createSubject(newSubjectID, params.name, params.assignees);
+  await repo.createSubject(newSubjectID, params.name, assignees);
   return {
     id: newSubjectID,
     name: params.name,
