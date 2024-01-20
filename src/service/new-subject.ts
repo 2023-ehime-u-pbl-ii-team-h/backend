@@ -1,19 +1,11 @@
 import { Account, Teacher } from "../model/account";
 import { ID } from "../model/id";
 import { Session } from "../model/session";
-import { Subject } from "../model/subject";
+import { Subject, SubjectRepository } from "../model/subject";
 import { nanoid } from "nanoid";
 
 export interface AccountQueryService {
   existsAll(...ids: ID<Account>[]): Promise<boolean>;
-}
-
-export interface SubjectRepository {
-  createSubject(
-    id: ID<Subject>,
-    name: string,
-    assignees: ID<Teacher>[],
-  ): Promise<void>;
 }
 
 export interface NewSubjectParams {
