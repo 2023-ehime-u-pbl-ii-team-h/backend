@@ -10,7 +10,6 @@
     "dev": "wrangler dev src/index.ts",
     "deploy": "wrangler publish src/index.ts"
   },
-  "license": "MIT",
   "dependencies": {
     "hono": "^3.11.10",
     "hono-sessions": "^0.3.3",
