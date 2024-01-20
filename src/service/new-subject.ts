@@ -38,7 +38,7 @@ export async function newSubject({
   }
 
   const assignees = [...assigneesSet.values()];
-  if (!query.existsAll(...assignees)) {
+  if (!(await query.existsAll(...assignees))) {
     return null;
   }
 
