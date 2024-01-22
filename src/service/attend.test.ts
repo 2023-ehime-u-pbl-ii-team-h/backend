@@ -79,9 +79,9 @@ test("not a student", async () => {
       ipAddress: "192.168.0.1",
       account: {
         id: "acc01" as ID<Account>,
-        name: "TEST Student",
-        role: "STUDENT",
-        email: "test.student@example.com",
+        name: "TEST Teacher",
+        role: "TEACHER",
+        email: "test.teacher@example.com",
       },
     },
     config: { allowIpRegex: ".*" },
