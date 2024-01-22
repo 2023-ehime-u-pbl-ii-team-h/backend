@@ -32,9 +32,9 @@ export class D1SubjectRepository implements SubjectRepository {
   ): Promise<Subject[]> {
     const { results } = await this.db
       .prepare(
-        "SELECT id, name FROM subject WHERE name LIKE %?1% ORDER BY name LIMIT ?2 OFFSET ?3",
+        "SELECT id, name FROM subject WHERE name LIKE ?1 ORDER BY name LIMIT ?2 OFFSET ?3",
       )
-      .bind(partialName, amount, offset)
+      .bind(`%${partialName}%`, amount, offset)
       .all<Subject>();
     if (!results) {
       throw new Error(`query error with partial name: ${partialName}`);
