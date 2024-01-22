@@ -36,7 +36,7 @@ export class MicrosoftOAuth implements AuthorizeUrlService, AccessTokenService {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        Origin: "",
+        Origin: new URL(redirectUri).origin,
       },
       body: new URLSearchParams({
         client_id: AZURE_CLIENT_ID,
