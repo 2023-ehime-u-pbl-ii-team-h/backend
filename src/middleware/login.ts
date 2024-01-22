@@ -20,6 +20,7 @@ export const loginMiddleware =
       const session = c.get("session");
       const login = session.get("login") as Session | null;
       if (!login) {
+        console.log(`there is no session cookie`);
         return c.text("", 401);
       }
 
@@ -29,6 +30,7 @@ export const loginMiddleware =
         .bind(login.id)
         .first<number>("login_at");
       if (!loginAt) {
+        console.log(`session (${login.id}) is not found`);
         return c.text("", 401);
       }
 
@@ -37,6 +39,7 @@ export const loginMiddleware =
         await c.env.DB.prepare("DELETE FROM session WHERE id = ?1")
           .bind(login.id)
           .run();
+        console.log(`session (${login.id}) was expired`);
         return c.text("", 401);
       }
       c.set("login", login);
