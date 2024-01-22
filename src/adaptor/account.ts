@@ -1,7 +1,7 @@
 import { Account, Student, Teacher } from "../model/account";
+import { AccountRepository } from "../model/account";
 import { ID } from "../model/id";
 import { StudentQueryService } from "../service/attend";
-import { AccountRepository } from "../service/login";
 import { AccountQueryService } from "../service/new-subject";
 
 export class D1AccountRepository
@@ -9,15 +9,15 @@ export class D1AccountRepository
 {
   constructor(private readonly db: D1Database) {}
 
-  async getAccount(email: string): Promise<Account> {
+  async getAccount(email: string): Promise<Account | null> {
     const entry = await this.db
-      .prepare("SELECT * FROM account WHERE email = ?")
+      .prepare("SELECT id, name, email, role FROM account WHERE email = ?")
       .bind(email)
-      .first();
+      .first<{ id: ID<Account>; name: string; email: string; role: string }>();
     if (!entry) {
-      throw new Error(`account having email ${email} not found`);
+      return null;
     }
-    return entry as Account;
+    return entry;
   }
 
   async getStudentOrTeacher(

@@ -1,4 +1,4 @@
-import { Account, newAccount } from "../model/account";
+import { Account, AccountRepository, newAccount } from "../model/account";
 import { generatePkceKeys } from "../model/auth";
 import { Session, Clock } from "../model/session";
 import { UAParser } from "ua-parser-js";
@@ -56,11 +56,6 @@ export interface AccessTokenService {
 
 export interface UserRepository {
   getMe(token: string): Promise<{ email: string; name: string }>;
-}
-
-export interface AccountRepository {
-  getAccount(email: string): Promise<Account | null>;
-  addAccount(account: Account): Promise<boolean>;
 }
 
 export interface LoginRepository {

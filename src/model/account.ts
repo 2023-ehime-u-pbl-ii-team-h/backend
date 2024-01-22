@@ -22,6 +22,11 @@ export type Teacher = Account & {
 export const isTeacher = (account: Account): account is Teacher =>
   account.role === "TEACHER";
 
+export interface AccountRepository {
+  getAccount(email: string): Promise<Account | null>;
+  addAccount(account: Account): Promise<boolean>;
+}
+
 export function newAccount(name: string, email: string): Account | null {
   const isStudent = /^[a-z]\d{6}[a-z]@mails\.cc\.ehime-u\.ac\.jp$/.test(email);
   const isTeacher = /@(.+\.)?ehime-u\.ac\.jp$/.test(email);
