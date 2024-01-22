@@ -62,7 +62,7 @@ export async function attend({
   if (!boardId) {
     return "NOT_FOUND";
   }
-  if (!(await boardQuery.hadSubmitted(studentId, boardId))) {
+  if (await boardQuery.hadSubmitted(studentId, boardId)) {
     return "UNPROCESSABLE_ENTITY";
   }
 

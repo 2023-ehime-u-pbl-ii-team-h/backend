@@ -26,7 +26,7 @@ test("attend to board", async () => {
     boardQuery: {
       getBoardRegisteredBy: () =>
         Promise.resolve("board01" as ID<AttendanceBoard>),
-      hadSubmitted: () => Promise.resolve(true),
+      hadSubmitted: () => Promise.resolve(false),
     },
     clock: { nowSeconds: () => 100 },
     repo,
@@ -59,7 +59,7 @@ test("blocked by ip address filter", async () => {
     boardQuery: {
       getBoardRegisteredBy: () =>
         Promise.resolve("board01" as ID<AttendanceBoard>),
-      hadSubmitted: () => Promise.resolve(true),
+      hadSubmitted: () => Promise.resolve(false),
     },
     clock: { nowSeconds: () => 100 },
     repo,
@@ -88,7 +88,7 @@ test("not a student", async () => {
     boardQuery: {
       getBoardRegisteredBy: () =>
         Promise.resolve("board01" as ID<AttendanceBoard>),
-      hadSubmitted: () => Promise.resolve(true),
+      hadSubmitted: () => Promise.resolve(false),
     },
     clock: { nowSeconds: () => 100 },
     repo,
@@ -116,7 +116,7 @@ test("invalid board", async () => {
     config: { allowIpRegex: ".*" },
     boardQuery: {
       getBoardRegisteredBy: () => Promise.resolve(null),
-      hadSubmitted: () => Promise.resolve(true),
+      hadSubmitted: () => Promise.resolve(false),
     },
     clock: { nowSeconds: () => 100 },
     repo,
@@ -125,7 +125,7 @@ test("invalid board", async () => {
   expect(res).toBe("NOT_FOUND");
 });
 
-test("not submitted", async () => {
+test("already submitted", async () => {
   const repo: AttendanceRepository = {
     createAttendance: () => Promise.resolve(),
     getAttendance: () => Promise.resolve(null),
@@ -145,7 +145,7 @@ test("not submitted", async () => {
     boardQuery: {
       getBoardRegisteredBy: () =>
         Promise.resolve("board01" as ID<AttendanceBoard>),
-      hadSubmitted: () => Promise.resolve(false),
+      hadSubmitted: () => Promise.resolve(true),
     },
     clock: { nowSeconds: () => 100 },
     repo,
