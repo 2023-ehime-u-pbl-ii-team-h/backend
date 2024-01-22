@@ -9,13 +9,13 @@ export class D1SubjectStudentRepository {
     subjectId: ID<Subject>,
     studentId: ID<Student>,
   ): Promise<"OK" | "ALREADY_EXISTS" | "UNKNOWN_SUBJECT"> {
-    const exists = !(await this.db
+    const entry = await this.db
       .prepare(
         "SELECT * FROM registration WHERE student_id = ?1 AND subject_id = ?2",
       )
       .bind(studentId, subjectId)
-      .first());
-    if (exists) {
+      .first();
+    if (entry !== null) {
       return "ALREADY_EXISTS";
     }
 
