@@ -39,7 +39,9 @@ export const loginMiddleware =
         await c.env.DB.prepare("DELETE FROM session WHERE id = ?1")
           .bind(login.id)
           .run();
-        console.log(`session (${login.id}) was expired`);
+        console.log(
+          `session (${login.id}) from ${new Date(loginAt * 1000)} was expired`,
+        );
         return c.text("", 401);
       }
       c.set("login", login);
