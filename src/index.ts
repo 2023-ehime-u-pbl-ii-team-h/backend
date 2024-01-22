@@ -21,7 +21,6 @@ import { z } from "zod";
 
 type Bindings = {
   DB: D1Database;
-  COOKIE_SECRET: string;
   AZURE_CLIENT_SECRET: string;
   ALLOW_IP_REGEX: string;
 };
