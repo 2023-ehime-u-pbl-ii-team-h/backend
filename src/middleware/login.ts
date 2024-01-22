@@ -13,6 +13,9 @@ export const loginMiddleware =
     };
   }> =>
   async (c, next) => {
+    if (c.req.method === "OPTIONS") {
+      return next();
+    }
     const authorization = c.req.header("Authorization");
     if (!authorization || !authorization.startsWith("Bearer ")) {
       console.log("missing Authorization header");
