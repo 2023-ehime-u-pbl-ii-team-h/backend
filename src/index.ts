@@ -39,7 +39,6 @@ app.use(
   "*",
   cors({
     origin: ["https://student-66e.pages.dev", "https://teacher-3zl.pages.dev"],
-    credentials: true,
   }),
 );
 
