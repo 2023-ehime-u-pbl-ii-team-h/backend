@@ -7,6 +7,10 @@ export class D1SubjectTeacherRepository {
   async teachersByEachSubject(
     subjects: readonly Subject[],
   ): Promise<Teacher[][]> {
+    if (subjects.length === 0) {
+      return [];
+    }
+
     const selectTeacher = this.db.prepare(
       "SELECT account.id, account.name, account.email, account.role FROM charge INNER JOIN account ON account.id = charge.teacher_id AND charge.subject_id = ?1 AND account.role = 'TEACHER'",
     );
@@ -24,6 +28,10 @@ export class D1SubjectTeacherRepository {
   async subjectsByEachTeacher(
     teachers: readonly Teacher[],
   ): Promise<Subject[][]> {
+    if (teachers.length === 0) {
+      return [];
+    }
+
     const selectSubject = this.db.prepare(
       "SELECT subject.id, subject.name FROM charge INNER JOIN subject ON charge.subject_id = subject.id AND charge.teacher_id = ?1",
     );
