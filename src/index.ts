@@ -174,7 +174,7 @@ app.put("/me/registrations/:subject_id", async (c) => {
     case "OK":
       return new Response();
     case "ALREADY_EXISTS":
-      return c.text("already exists", 204);
+      return new Response(null, { status: 204 });
     case "UNKNOWN_SUBJECT":
       return c.text("", 400);
   }
