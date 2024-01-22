@@ -147,7 +147,7 @@ app.get("/me/subjects", async (c) => {
     subjects.map(({ id, name }, index) => ({
       id,
       name,
-      lastDate: latestBoards[index][0]?.startFrom.toISOString() ?? "",
+      boards: latestBoards[index],
     })),
   );
 });
