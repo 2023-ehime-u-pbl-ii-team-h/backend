@@ -1,8 +1,33 @@
 import { Student } from "../model/account";
+import { ID } from "../model/id";
 import { Subject } from "../model/subject";
 
 export class D1SubjectStudentRepository {
   constructor(private readonly db: D1Database) {}
+
+  async insert(
+    subjectId: ID<Subject>,
+    studentId: ID<Student>,
+  ): Promise<"OK" | "ALREADY_EXISTS" | "UNKNOWN_SUBJECT"> {
+    const exists = !(await this.db
+      .prepare(
+        "SELECT * FROM registration WHERE student_id = ?1 AND subject_id = ?2",
+      )
+      .bind(studentId, subjectId)
+      .first());
+    if (exists) {
+      return "ALREADY_EXISTS";
+    }
+
+    const { success } = await this.db
+      .prepare(
+        "INSERT INTO registration (student_id, subject_id) VALUES (?1, ?2)",
+      )
+      .bind(studentId, subjectId)
+      .run();
+
+    return success ? "OK" : "UNKNOWN_SUBJECT";
+  }
 
   async studentsByEachSubjects(
     subjects: readonly Subject[],

@@ -166,12 +166,18 @@ app.put("/me/registrations/:subject_id", async (c) => {
   }
 
   const subjectId = c.req.param("subject_id");
-  const { success } = await c.env.DB.prepare(
-    "INSERT INTO registration (student_id, subject_id) VALUES (?1, ?2)",
-  )
-    .bind(account.id, subjectId)
-    .run();
-  return c.text("", success ? 200 : 400);
+  const res = await new D1SubjectStudentRepository(c.env.DB).insert(
+    subjectId as ID<Subject>,
+    account.id,
+  );
+  switch (res) {
+    case "OK":
+      return new Response();
+    case "ALREADY_EXISTS":
+      return c.text("already exists", 204);
+    case "UNKNOWN_SUBJECT":
+      return c.text("", 400);
+  }
 });
 
 app.get("/subjects", async (c) => {
