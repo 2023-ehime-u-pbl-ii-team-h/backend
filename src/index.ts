@@ -57,6 +57,8 @@ app.use("*", (c, next) => {
     expireAfterSeconds: EXPIRE_AFTER_SECONDS,
     cookieOptions: {
       httpOnly: true,
+      sameSite: "None",
+      secure: true,
     },
   }) as unknown as MiddlewareHandler;
   return middleware(c, next);
