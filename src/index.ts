@@ -266,7 +266,7 @@ app.get("/subjects", async (c) => {
   const subjects = await new D1SubjectRepository(c.env.DB).searchSubjects(
     name,
     PAGE_SIZE,
-    pageIndex * PAGE_SIZE,
+    (pageIndex - 1) * PAGE_SIZE,
   );
   const teachersBySubject = await new D1SubjectTeacherRepository(
     c.env.DB,
