@@ -34,7 +34,7 @@ export const loginMiddleware =
         return c.text("", 401);
       }
 
-      const isExpired = !(loginAt + expirationSeconds < Date.now() / 1000);
+      const isExpired = !(Date.now() / 1000 < loginAt + expirationSeconds);
       if (isExpired) {
         await c.env.DB.prepare("DELETE FROM session WHERE id = ?1")
           .bind(login.id)
