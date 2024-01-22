@@ -1,11 +1,10 @@
-import { isTeacher } from "../model/account";
+import { Account, isTeacher } from "../model/account";
 import { Attendance, AttendanceRepository } from "../model/attendance";
 import { AttendanceBoardRepository } from "../model/attendance-board";
 import { ID } from "../model/id";
-import { Session } from "../model/session";
 
 export interface CorrectAttendanceDeps {
-  session: Session;
+  account: Account;
   target: ID<Attendance>;
   timeToSet: Date;
   attendanceRepo: AttendanceRepository;
@@ -15,13 +14,13 @@ export interface CorrectAttendanceDeps {
 export type CorrectAttendanceResult = "OK" | "BAD_REQUEST" | "UNAUTHORIZED";
 
 export async function correctAttendance({
-  session,
+  account,
   target,
   timeToSet,
   attendanceRepo,
   boardRepo,
 }: CorrectAttendanceDeps): Promise<CorrectAttendanceResult> {
-  if (!isTeacher(session.account)) {
+  if (!isTeacher(account)) {
     return "UNAUTHORIZED";
   }
 

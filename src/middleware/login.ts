@@ -1,45 +1,39 @@
-import { HonoSessionRepository } from "../adaptor/session";
-import { Session } from "../model/session";
-import { MiddlewareHandler } from "hono";
-import { Session as HonoSession } from "hono-sessions";
+import { D1AccountRepository } from "../adaptor/account";
+import { MicrosoftGraph } from "../adaptor/microsoft-graph";
+import { Account, newAccount } from "../model/account";
+import type { MiddlewareHandler } from "hono";
 
 export const loginMiddleware =
-  (
-    expirationSeconds: number,
-    ignorePaths: readonly string[],
-  ): MiddlewareHandler<{
+  (): MiddlewareHandler<{
     Bindings: {
       DB: D1Database;
     };
     Variables: {
-      session: HonoSession;
-      login: Session;
+      account: Account;
     };
   }> =>
   async (c, next) => {
-    if (!ignorePaths.includes(c.req.path)) {
-      const session = c.get("session");
-      const login = await new HonoSessionRepository(
-        session,
-        c.env.DB,
-      ).getSession();
-      if (!login) {
-        console.log(`there is no session cookie`);
-        return c.text("", 401);
-      }
-
-      const isExpired = !(
-        Date.now() <
-        login.loginAt.valueOf() + expirationSeconds * 1000
-      );
-      if (isExpired) {
-        await c.env.DB.prepare("DELETE FROM session WHERE id = ?1")
-          .bind(login.id)
-          .run();
-        console.log(`session (${login.id}) from ${login.loginAt} was expired`);
-        return c.text("", 401);
-      }
-      c.set("login", login);
+    const authorization = c.req.header("Authorization");
+    if (!authorization || !authorization.startsWith("Bearer ")) {
+      console.log("missing Authorization header");
+      return c.text("", 401);
     }
+    const token = authorization.slice("Bearer ".length);
+
+    const { name, email } = await new MicrosoftGraph().getMe(token);
+
+    const accountRepo = new D1AccountRepository(c.env.DB);
+    let account = await accountRepo.getAccount(email);
+    if (!account) {
+      const created = newAccount(name, email);
+      if (!created) {
+        console.log(`unknown user: ${name} (${email})`);
+        return c.text("", 400);
+      }
+      await accountRepo.addAccount(created);
+      account = created;
+    }
+    c.set("account", account);
+
     return next();
   };

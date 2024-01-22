@@ -5,7 +5,6 @@ compatibility_date = "2022-11-22"
 
 [env.staging.vars]
 ENVIRONMENT = "staging"
-COOKIE_SECRET = "XFS2DVYZskm4g9EXqRJFrwFcftqm0FWk9hicznhhhQ4"
 ALLOW_IP_REGEX = "^.*$"
 
 [[env.staging.d1_databases]]
@@ -16,7 +15,6 @@ preview_database_id = "attend-stamp-staging-preview"
 
 [env.production.vars]
 ENVIRONMENT = "production"
-COOKIE_SECRET = "XFS2DVYZskm4g9EXqRJFrwFcftqm0FWk9hicznhhhQ4"
 ALLOW_IP_REGEX = "^133\\.71\\.210\\.43$"
 
 [[env.production.d1_databases]]

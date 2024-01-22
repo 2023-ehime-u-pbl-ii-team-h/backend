@@ -1,6 +1,5 @@
-import { Account, Teacher } from "../model/account";
+import { Account, Teacher, isTeacher } from "../model/account";
 import { ID } from "../model/id";
-import { Session } from "../model/session";
 import { Subject, SubjectRepository } from "../model/subject";
 import { nanoid } from "nanoid";
 
@@ -14,7 +13,7 @@ export interface NewSubjectParams {
 }
 
 export interface NewSubjectDependencies {
-  session: Session;
+  account: Account;
   params: NewSubjectParams;
   query: AccountQueryService;
   repo: SubjectRepository;
@@ -27,13 +26,17 @@ export interface NewSubjectResponse {
 }
 
 export async function newSubject({
-  session,
+  account,
   params,
   query,
   repo,
 }: NewSubjectDependencies): Promise<NewSubjectResponse | null> {
+  if (!isTeacher(account)) {
+    return null;
+  }
+
   const assigneesSet = new Set(params.assignees);
-  if (!assigneesSet.has(session.account.id as ID<Teacher>)) {
+  if (!assigneesSet.has(account.id)) {
     return null;
   }
 

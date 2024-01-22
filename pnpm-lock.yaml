@@ -8,9 +8,6 @@ dependencies:
   hono:
     specifier: ^3.11.10
     version: 3.11.10
-  hono-sessions:
-    specifier: ^0.3.3
-    version: 0.3.3
   nanoid:
     specifier: ^5.0.4
     version: 5.0.4
@@ -1207,21 +1204,8 @@ packages:
     engines: {node: '>=4'}
     dev: true
 
-  /hono-sessions@0.3.3:
-    resolution: {integrity: sha512-yBvXYc8Zkwa2DPoJDfxekcD/8714IWCshhiRufpbuksVGJlBb9IZML/L52RsOQqCiDpYaGvWZ459Sbd1G1mZag==}
-    dependencies:
-      hono: 3.5.8
-      iron-webcrypto: 0.10.1
-      nanoid: 4.0.0
-    dev: false
-
   /hono@3.11.10:
     resolution: {integrity: sha512-vizPp5PfVq5dwgN+EM+8v7RHlvrrEbnpkHtM2GMsl6KICA/MvWcnEMJ5L8SjYPxueB8VJMwc6nzzgKj5Vovp7g==}
-    engines: {node: '>=16.0.0'}
-    dev: false
-
-  /hono@3.5.8:
-    resolution: {integrity: sha512-ZipTmGfHm43q5QOEBGog2wyejyNUcicjPt0BLDQ8yz9xij/y9RYXRpR1YPxMpQqeyNM7isvpsIAe9Ems51Wq0Q==}
     engines: {node: '>=16.0.0'}
     dev: false
 
@@ -1229,10 +1213,6 @@ packages:
     resolution: {integrity: sha512-AXcZb6vzzrFAUE61HnN4mpLqd/cSIwNQjtNWR0euPm6y0iqx3G4gOXaIDdtdDwZmhwe82LA6+zinmW4UBWVePQ==}
     engines: {node: '>=16.17.0'}
     dev: true
-
-  /iron-webcrypto@0.10.1:
-    resolution: {integrity: sha512-QGOS8MRMnj/UiOa+aMIgfyHcvkhqNUsUxb1XzskENvbo+rEfp6TOwqd1KPuDzXC4OnGHcMSVxDGRoilqB8ViqA==}
-    dev: false
 
   /is-binary-path@2.1.0:
     resolution: {integrity: sha512-ZMERYes6pDydyuGidse7OsHxtbI7WVeUEozgR/g7rd0xUimYNlvZRE/K2MgZTjWy725IfelLeVcEM97mmtRGXw==}
@@ -1377,12 +1357,6 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
     dev: true
-
-  /nanoid@4.0.0:
-    resolution: {integrity: sha512-IgBP8piMxe/gf73RTQx7hmnhwz0aaEXYakvqZyE302IXW3HyVNhdNGC+O2MwMAVhLEnvXlvKtGbtJf6wvHihCg==}
-    engines: {node: ^14 || ^16 || >=18}
-    hasBin: true
-    dev: false
 
   /nanoid@5.0.4:
     resolution: {integrity: sha512-vAjmBf13gsmhXSgBrtIclinISzFFy22WwCYoyilZlsrRXNIHSwgFQ1bEdjRwMT3aoadeIF6HMuDRlOxzfXV8ig==}

@@ -9,6 +9,7 @@ export type Account = {
 };
 
 export type Student = Account & {
+  readonly id: ID<Student>;
   readonly role: "STUDENT";
 };
 
@@ -16,6 +17,7 @@ export const isStudent = (account: Account): account is Student =>
   account.role === "STUDENT";
 
 export type Teacher = Account & {
+  readonly id: ID<Teacher>;
   readonly role: "TEACHER";
 };
 
