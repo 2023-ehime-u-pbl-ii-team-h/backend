@@ -101,29 +101,22 @@ app.put("/attendances/:attendance_id", async (c) => {
 
 app.get("/me", async (c) => {
   const account = c.get("account");
-  const repo = new D1AccountRepository(c.env.DB);
-  const name = await repo.selectAccountName(account.id);
-  const info = await repo.getStudentOrTeacher(account.id);
-  if (!info) {
-    throw new Error("account info not found");
-  }
-
-  switch (info.role) {
-    case "STUDENT":
+  switch (true) {
+    case isStudent(account):
       const [registrations] = await new D1SubjectStudentRepository(
         c.env.DB,
-      ).subjectsByEachStudent([info]);
+      ).subjectsByEachStudent([account]);
       return c.json({
-        name,
+        name: account.name,
         email: account.email,
         registrations,
       });
-    case "TEACHER":
+    case isTeacher(account):
       const [charges] = await new D1SubjectTeacherRepository(
         c.env.DB,
-      ).subjectsByEachTeacher([info]);
+      ).subjectsByEachTeacher([account]);
       return c.json({
-        name,
+        name: account.name,
         email: account.email,
         charges,
       });
