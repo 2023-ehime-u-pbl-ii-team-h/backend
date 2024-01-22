@@ -109,6 +109,6 @@ export async function loginRedirect({
     account,
     (parserResults.device.type ?? "") + (parserResults.browser.name ?? ""),
   );
-  sessionRepo.createLoginSession(newSession);
+  await sessionRepo.createLoginSession(newSession);
   return query.returnUrl;
 }
