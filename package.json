@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "hono": "^3.11.10",
-    "hono-sessions": "^0.3.3",
     "nanoid": "^5.0.4",
     "ua-parser-js": "^1.0.37",
     "zod": "^3.22.4"
