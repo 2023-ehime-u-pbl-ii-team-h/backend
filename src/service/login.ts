@@ -30,7 +30,7 @@ export async function login(
 ): Promise<string> {
   const { verifier, challenge } = await generatePkceKeys();
 
-  verifierRepo.store(verifier);
+  await verifierRepo.store(verifier);
 
   return authorizeUrl.buildAuthorizeUrl(
     challenge,
