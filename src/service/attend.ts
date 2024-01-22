@@ -1,21 +1,16 @@
-import { Account, Student } from "../model/account";
+import { Account, Student, isStudent } from "../model/account";
 import { Attendance, AttendanceRepository } from "../model/attendance";
 import { AttendanceBoard } from "../model/attendance-board";
 import { ID } from "../model/id";
-import { Session } from "../model/session";
 import { nanoid } from "nanoid";
 
 export interface Input {
   ipAddress: string;
-  session: Session;
+  account: Account;
 }
 
 export interface Config {
   allowIpRegex: string;
-}
-
-export interface StudentQueryService {
-  isValidStudent(accountId: ID<Account>): Promise<boolean>;
 }
 
 export interface AttendanceBoardQueryService {
@@ -33,7 +28,6 @@ export interface Clock {
 export interface AttendDeps {
   input: Input;
   config: Config;
-  studentQuery: StudentQueryService;
   boardQuery: AttendanceBoardQueryService;
   clock: Clock;
   repo: AttendanceRepository;
@@ -49,7 +43,6 @@ export type Response =
 export async function attend({
   input,
   config,
-  studentQuery,
   boardQuery,
   clock,
   repo,
@@ -59,10 +52,10 @@ export async function attend({
     return "FORBIDDEN";
   }
 
-  if (!(await studentQuery.isValidStudent(input.session.account.id))) {
+  if (!isStudent(input.account)) {
     return "UNAUTHORIZED";
   }
-  const studentId = input.session.account.id as ID<Student>;
+  const studentId = input.account.id;
 
   const now = clock.nowSeconds();
   const boardId = await boardQuery.getBoardRegisteredBy(studentId, now);

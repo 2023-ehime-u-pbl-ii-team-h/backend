@@ -1,11 +1,10 @@
 import { Account, Student, Teacher } from "../model/account";
 import { AccountRepository } from "../model/account";
 import { ID } from "../model/id";
-import { StudentQueryService } from "../service/attend";
 import { AccountQueryService } from "../service/new-subject";
 
 export class D1AccountRepository
-  implements AccountRepository, AccountQueryService, StudentQueryService
+  implements AccountRepository, AccountQueryService
 {
   constructor(private readonly db: D1Database) {}
 
@@ -36,13 +35,21 @@ export class D1AccountRepository
       string
     >;
 
-    if (role === "STUDENT" || role === "TEACHER") {
+    if (role === "STUDENT") {
       return {
-        id: accountId,
+        id: accountId as ID<Student>,
         name,
         email,
         role,
-      };
+      } satisfies Student;
+    }
+    if (role === "TEACHER") {
+      return {
+        id: accountId as ID<Teacher>,
+        name,
+        email,
+        role,
+      } satisfies Teacher;
     }
     throw new Error(`unknown role: ${role}`);
   }

@@ -2,7 +2,6 @@ import { Account } from "../model/account";
 import { AttendanceRepository } from "../model/attendance";
 import { AttendanceBoard } from "../model/attendance-board";
 import { ID } from "../model/id";
-import { Session } from "../model/session";
 import { attend } from "./attend";
 import { expect, test, vi } from "vitest";
 
@@ -16,22 +15,14 @@ test("attend to board", async () => {
   const res = await attend({
     input: {
       ipAddress: "192.168.0.1",
-      session: new Session(
-        "ses01" as ID<Session>,
-        {
-          id: "acc01" as ID<Account>,
-          name: "TEST Student",
-          role: "STUDENT",
-          email: "test.student@example.com",
-        },
-        new Date("2024-01-01T02:40Z"),
-        "TEST Phone",
-      ),
+      account: {
+        id: "acc01" as ID<Account>,
+        name: "TEST Student",
+        role: "STUDENT",
+        email: "test.student@example.com",
+      },
     },
     config: { allowIpRegex: ".*" },
-    studentQuery: {
-      isValidStudent: () => Promise.resolve(true),
-    },
     boardQuery: {
       getBoardRegisteredBy: () =>
         Promise.resolve("board01" as ID<AttendanceBoard>),
@@ -57,22 +48,14 @@ test("blocked by ip address filter", async () => {
   const res = await attend({
     input: {
       ipAddress: "172.0.0.1",
-      session: new Session(
-        "ses01" as ID<Session>,
-        {
-          id: "acc01" as ID<Account>,
-          name: "TEST Student",
-          role: "STUDENT",
-          email: "test.student@example.com",
-        },
-        new Date("2024-01-01T02:40Z"),
-        "TEST Phone",
-      ),
+      account: {
+        id: "acc01" as ID<Account>,
+        name: "TEST Student",
+        role: "STUDENT",
+        email: "test.student@example.com",
+      },
     },
     config: { allowIpRegex: "^192.168.0.1$" },
-    studentQuery: {
-      isValidStudent: () => Promise.resolve(true),
-    },
     boardQuery: {
       getBoardRegisteredBy: () =>
         Promise.resolve("board01" as ID<AttendanceBoard>),
@@ -94,22 +77,14 @@ test("not a student", async () => {
   const res = await attend({
     input: {
       ipAddress: "192.168.0.1",
-      session: new Session(
-        "ses01" as ID<Session>,
-        {
-          id: "acc01" as ID<Account>,
-          name: "TEST Student",
-          role: "STUDENT",
-          email: "test.student@example.com",
-        },
-        new Date("2024-01-01T02:40Z"),
-        "TEST Phone",
-      ),
+      account: {
+        id: "acc01" as ID<Account>,
+        name: "TEST Student",
+        role: "STUDENT",
+        email: "test.student@example.com",
+      },
     },
     config: { allowIpRegex: ".*" },
-    studentQuery: {
-      isValidStudent: () => Promise.resolve(false),
-    },
     boardQuery: {
       getBoardRegisteredBy: () =>
         Promise.resolve("board01" as ID<AttendanceBoard>),
@@ -131,22 +106,14 @@ test("invalid board", async () => {
   const res = await attend({
     input: {
       ipAddress: "192.168.0.1",
-      session: new Session(
-        "ses01" as ID<Session>,
-        {
-          id: "acc01" as ID<Account>,
-          name: "TEST Student",
-          role: "STUDENT",
-          email: "test.student@example.com",
-        },
-        new Date("2024-01-01T02:40Z"),
-        "TEST Phone",
-      ),
+      account: {
+        id: "acc01" as ID<Account>,
+        name: "TEST Student",
+        role: "STUDENT",
+        email: "test.student@example.com",
+      },
     },
     config: { allowIpRegex: ".*" },
-    studentQuery: {
-      isValidStudent: () => Promise.resolve(true),
-    },
     boardQuery: {
       getBoardRegisteredBy: () => Promise.resolve(null),
       hadSubmitted: () => Promise.resolve(true),
@@ -167,22 +134,14 @@ test("not submitted", async () => {
   const res = await attend({
     input: {
       ipAddress: "192.168.0.1",
-      session: new Session(
-        "ses01" as ID<Session>,
-        {
-          id: "acc01" as ID<Account>,
-          name: "TEST Student",
-          role: "STUDENT",
-          email: "test.student@example.com",
-        },
-        new Date("2024-01-01T02:40Z"),
-        "TEST Phone",
-      ),
+      account: {
+        id: "acc01" as ID<Account>,
+        name: "TEST Student",
+        role: "STUDENT",
+        email: "test.student@example.com",
+      },
     },
     config: { allowIpRegex: ".*" },
-    studentQuery: {
-      isValidStudent: () => Promise.resolve(true),
-    },
     boardQuery: {
       getBoardRegisteredBy: () =>
         Promise.resolve("board01" as ID<AttendanceBoard>),

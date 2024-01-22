@@ -5,7 +5,6 @@ import {
   AttendanceBoardRepository,
 } from "../model/attendance-board";
 import { ID } from "../model/id";
-import { Session } from "../model/session";
 import { Subject } from "../model/subject";
 import { correctAttendance } from "./correct-attendance";
 import { expect, test, vi } from "vitest";
@@ -38,17 +37,12 @@ test("correct attendance", async () => {
   const getBoardSpy = vi.spyOn(boardRepo, "getBoard");
 
   const res = await correctAttendance({
-    session: new Session(
-      "ses01" as ID<Session>,
-      {
-        id: "acc01" as ID<Account>,
-        name: "TEST Teacher",
-        role: "TEACHER",
-        email: "test.teacher@example.com",
-      },
-      new Date("2024-01-08T02:19:59Z"),
-      "TEST Phone",
-    ),
+    account: {
+      id: "acc01" as ID<Account>,
+      name: "TEST Teacher",
+      role: "TEACHER",
+      email: "test.teacher@example.com",
+    },
     target: "att01" as ID<Attendance>,
     timeToSet: new Date("2024-01-08T14:19:59Z"),
     attendanceRepo,
@@ -91,17 +85,12 @@ test("not a teacher", async () => {
   };
 
   const res = await correctAttendance({
-    session: new Session(
-      "ses01" as ID<Session>,
-      {
-        id: "acc02" as ID<Account>,
-        name: "TEST Student",
-        role: "STUDENT",
-        email: "test.student@example.com",
-      },
-      new Date("2024-01-08T02:19:59Z"),
-      "TEST Phone",
-    ),
+    account: {
+      id: "acc02" as ID<Account>,
+      name: "TEST Student",
+      role: "STUDENT",
+      email: "test.student@example.com",
+    },
     target: "att01" as ID<Attendance>,
     timeToSet: new Date("2024-01-08T14:19:59Z"),
     attendanceRepo,
@@ -130,17 +119,12 @@ test("not found attendance", async () => {
   };
 
   const res = await correctAttendance({
-    session: new Session(
-      "ses01" as ID<Session>,
-      {
-        id: "acc01" as ID<Account>,
-        name: "TEST Teacher",
-        role: "TEACHER",
-        email: "test.teacher@example.com",
-      },
-      new Date("2024-01-08T02:19:59Z"),
-      "TEST Phone",
-    ),
+    account: {
+      id: "acc01" as ID<Account>,
+      name: "TEST Teacher",
+      role: "TEACHER",
+      email: "test.teacher@example.com",
+    },
     target: "att01" as ID<Attendance>,
     timeToSet: new Date("2024-01-08T14:19:59Z"),
     attendanceRepo,
@@ -175,17 +159,12 @@ test("cannot set to time before start of board", async () => {
   };
 
   const res = await correctAttendance({
-    session: new Session(
-      "ses01" as ID<Session>,
-      {
-        id: "acc01" as ID<Account>,
-        name: "TEST Teacher",
-        role: "TEACHER",
-        email: "test.teacher@example.com",
-      },
-      new Date("2024-01-08T02:19:59Z"),
-      "TEST Phone",
-    ),
+    account: {
+      id: "acc01" as ID<Account>,
+      name: "TEST Teacher",
+      role: "TEACHER",
+      email: "test.teacher@example.com",
+    },
     target: "att01" as ID<Attendance>,
     timeToSet: new Date("2024-01-08T12:59:59Z"),
     attendanceRepo,
