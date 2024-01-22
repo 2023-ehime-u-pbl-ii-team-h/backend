@@ -1,4 +1,4 @@
-import { Account, AccountRepository, newAccount } from "../model/account";
+import { AccountRepository, newAccount } from "../model/account";
 import { generatePkceKeys } from "../model/auth";
 import { Session, Clock } from "../model/session";
 import { UAParser } from "ua-parser-js";

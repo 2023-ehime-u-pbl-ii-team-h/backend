@@ -1,6 +1,4 @@
 import { Teacher } from "../model/account";
-import { AttendanceBoard } from "../model/attendance-board";
-import { ID } from "../model/id";
 import { Subject } from "../model/subject";
 
 export class D1SubjectTeacherRepository {
