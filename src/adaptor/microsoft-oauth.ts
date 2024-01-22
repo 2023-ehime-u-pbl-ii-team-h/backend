@@ -48,7 +48,7 @@ export class MicrosoftOAuth implements AuthorizeUrlService, AccessTokenService {
       }),
     });
     if (!res.ok) {
-      throw new Error("token grant failure");
+      throw new Error(`token grant failure: ${await res.text()}`);
     }
 
     const { access_token: accessToken } = (await res.json()) as {
