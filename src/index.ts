@@ -34,12 +34,7 @@ const app = new Hono<{
 
 app.use("*", loginMiddleware());
 
-app.use(
-  "*",
-  cors({
-    origin: ["https://student-66e.pages.dev", "https://teacher-3zl.pages.dev"],
-  }),
-);
+app.use("*", cors());
 
 app.post("/logout", async () => {
   return new Response();
