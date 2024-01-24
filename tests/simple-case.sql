@@ -34,11 +34,22 @@ VALUES
     ('acc01', 'sub01');
 
 INSERT INTO
-    "session"(id, account_id, login_at, device_name)
+    "session" (id, account_id, login_at, device_name)
 VALUES
     ('ses01', 'acc01', unixepoch('now'), 'TEST Phone');
 
 INSERT INTO
-    "session"(id, account_id, login_at, device_name)
+    "session" (id, account_id, login_at, device_name)
 VALUES
     ('ses02', 'acc02', unixepoch('now'), 'TEST PC');
+
+INSERT INTO
+    attendance_board (
+        id,
+        subject_id,
+        start_from,
+        seconds_from_start_to_be_late,
+        seconds_from_be_late_to_end
+    )
+VALUES
+    ('brd01', 'sub01', unixepoch('now'), 1800, 3600);
