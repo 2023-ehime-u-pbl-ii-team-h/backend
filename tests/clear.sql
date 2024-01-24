@@ -1,4 +1,7 @@
 DELETE FROM
+    attendance_board;
+
+DELETE FROM
     "session";
 
 DELETE FROM
