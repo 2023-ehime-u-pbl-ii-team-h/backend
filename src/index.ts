@@ -105,7 +105,8 @@ app.get("/me", async (c) => {
         id: account.id,
         name: account.name,
         email: account.email,
-        registrations,
+        role: account.role,
+        subscriptions: registrations,
       });
     case isTeacher(account):
       const [charges] = await new D1SubjectTeacherRepository(
@@ -115,7 +116,8 @@ app.get("/me", async (c) => {
         id: account.id,
         name: account.name,
         email: account.email,
-        charges,
+        role: account.role,
+        subscriptions: charges,
       });
     default:
       throw new Error("unreachable");
