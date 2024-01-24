@@ -1,7 +1,7 @@
 const MICROSOFT_GRAPH_API_ROOT = "https://graph.microsoft.com/v1.0";
 
 export class MicrosoftGraph {
-  async getMe(token: string): Promise<{ email: string; name: string }> {
+  async getMe(token: string): Promise<{ email: string; name: string } | null> {
     const info = await fetch(MICROSOFT_GRAPH_API_ROOT + "/me", {
       headers: {
         Authorization: "Bearer " + token,

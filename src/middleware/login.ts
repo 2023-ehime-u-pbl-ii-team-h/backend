@@ -23,7 +23,12 @@ export const loginMiddleware =
     }
     const token = authorization.slice("Bearer ".length);
 
-    const { name, email } = await new MicrosoftGraph().getMe(token);
+    const me = await new MicrosoftGraph().getMe(token);
+    if (!me) {
+      console.log("token is expired");
+      return c.text("", 401);
+    }
+    const { name, email } = me;
 
     const accountRepo = new D1AccountRepository(c.env.DB);
     let account = await accountRepo.getAccount(email);
