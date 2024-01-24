@@ -102,6 +102,7 @@ app.get("/me", async (c) => {
         c.env.DB,
       ).subjectsByEachStudent([account]);
       return c.json({
+        id: account.id,
         name: account.name,
         email: account.email,
         registrations,
@@ -111,6 +112,7 @@ app.get("/me", async (c) => {
         c.env.DB,
       ).subjectsByEachTeacher([account]);
       return c.json({
+        id: account.id,
         name: account.name,
         email: account.email,
         charges,
