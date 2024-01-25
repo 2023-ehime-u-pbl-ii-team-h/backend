@@ -316,9 +316,11 @@ app.get("/subjects/:subject_id/all_attendances", async (c) => {
 });
 
 app.post("/subjects/:subject_id/boards", async (c) => {
+  const subjectId = c.req.param("subject_id") as ID<Subject>;
   const reqBody = await c.req.json();
 
   const res = await newBoards({
+    subjectId,
     reqBody,
     repo: new D1AttendanceBoardRepository(c.env.DB),
   });

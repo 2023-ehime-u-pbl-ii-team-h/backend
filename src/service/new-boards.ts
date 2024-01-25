@@ -8,7 +8,6 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 
 const SCHEMA = z.object({
-  subject: z.string().min(1),
   boards: z
     .array(
       z.object({
@@ -21,6 +20,7 @@ const SCHEMA = z.object({
 });
 
 export interface NewBoardsDeps {
+  subjectId: ID<Subject>;
   reqBody: unknown;
   repo: AttendanceBoardRepository;
 }
@@ -30,6 +30,7 @@ export type NewBoardsResult =
   | [type: "BAD_REQUEST"];
 
 export async function newBoards({
+  subjectId,
   reqBody,
   repo,
 }: NewBoardsDeps): Promise<NewBoardsResult> {
@@ -38,7 +39,7 @@ export async function newBoards({
     return ["BAD_REQUEST"];
   }
 
-  const { subject, boards: boardParams } = parseResult.data;
+  const { boards: boardParams } = parseResult.data;
   const boards = boardParams.map(
     ({
       startFrom,
@@ -46,7 +47,7 @@ export async function newBoards({
       secondsFromBeLateToEnd,
     }): AttendanceBoard => ({
       id: nanoid() as ID<AttendanceBoard>,
-      subject: subject as ID<Subject>,
+      subject: subjectId,
       startFrom: new Date(startFrom),
       secondsFromStartToBeLate,
       secondsFromBeLateToEnd,
