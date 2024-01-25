@@ -329,6 +329,40 @@ app.post("/subjects/:subject_id/boards", async (c) => {
   return c.json({ ids: res[1] });
 });
 
+app.put("/subjects/:subject_id/boards/:board_id", async (c) => {
+  const boardId = c.req.param("board_id") as ID<AttendanceBoard>;
+  const boardRepo = new D1AttendanceBoardRepository(c.env.DB);
+  const board = await boardRepo.getBoard(boardId);
+  if (!board) {
+    return c.text("Not Found", 404);
+  }
+
+  const reqBody: unknown = await c.req.json();
+  const schema = z.object({
+    start_from: z.string().datetime().optional(),
+    seconds_from_start_to_be_late: z.number().positive().optional(),
+    seconds_from_be_late_to_end: z.number().positive().optional(),
+  });
+  const parseResult = await schema.safeParseAsync(reqBody);
+  if (!parseResult.success) {
+    return c.text("", 400);
+  }
+
+  const parsed = parseResult.data;
+  const newBoard = { ...board };
+  if (parsed.start_from) {
+    newBoard.startFrom = new Date(parsed.start_from);
+  }
+  if (parsed.seconds_from_start_to_be_late) {
+    newBoard.secondsFromStartToBeLate = parsed.seconds_from_start_to_be_late;
+  }
+  if (parsed.seconds_from_be_late_to_end) {
+    newBoard.secondsFromBeLateToEnd = parsed.seconds_from_be_late_to_end;
+  }
+  await boardRepo.update(newBoard);
+  return new Response();
+});
+
 app.get("/subjects/:subject_id/boards/:board_id/attendances", async (c) => {
   const account = c.get("account");
   if (!isTeacher(account)) {
