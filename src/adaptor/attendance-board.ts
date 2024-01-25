@@ -38,6 +38,29 @@ export class D1AttendanceBoardRepository
     };
   }
 
+  async update(board: AttendanceBoard): Promise<boolean> {
+    const { success } = await this.db
+      .prepare(
+        "UPDATE attendance_board SET start_from = ?1, seconds_from_start_to_be_late = ?2, seconds_from_be_late_to_end = ?3 WHERE id = ?4",
+      )
+      .bind(
+        Math.floor(board.startFrom.valueOf() / 1000),
+        board.secondsFromStartToBeLate,
+        board.secondsFromBeLateToEnd,
+        board.id,
+      )
+      .run();
+    return success;
+  }
+
+  async delete(boardId: ID<AttendanceBoard>): Promise<boolean> {
+    const { success } = await this.db
+      .prepare("DELETE FROM attendance_board WHERE id = ?1")
+      .bind(boardId)
+      .run();
+    return success;
+  }
+
   async boardsByEachSubject(subjects: Subject[]): Promise<AttendanceBoard[][]> {
     if (subjects.length === 0) {
       return [];
@@ -132,7 +155,7 @@ export class D1AttendanceBoardRepository
         statement.bind(
           id,
           subject,
-          startFrom,
+          Math.floor(startFrom.valueOf() / 1000),
           secondsFromStartToBeLate,
           secondsFromBeLateToEnd,
         ),
