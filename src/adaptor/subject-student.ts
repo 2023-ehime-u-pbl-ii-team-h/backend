@@ -74,4 +74,12 @@ export class D1SubjectStudentRepository {
       return results;
     });
   }
+
+  async deleteSubjectRelations(subject: Subject): Promise<boolean> {
+    const { success } = await this.db
+      .prepare("DELETE FROM registration WHERE subject_id = ?1")
+      .bind(subject.id)
+      .run();
+    return success;
+  }
 }

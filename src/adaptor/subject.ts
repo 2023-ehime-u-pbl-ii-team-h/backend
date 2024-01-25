@@ -41,4 +41,12 @@ export class D1SubjectRepository implements SubjectRepository {
     }
     return results;
   }
+
+  async deleteSubject(subject: Subject): Promise<boolean> {
+    const { success } = await this.db
+      .prepare("DELETE FROM subject WHERE id = ?1")
+      .bind(subject.id)
+      .run();
+    return success;
+  }
 }

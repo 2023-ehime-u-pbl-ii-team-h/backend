@@ -270,6 +270,34 @@ app.get("/subjects/:subject_id", async (c) => {
   });
 });
 
+app.delete("/subjects/:subject_id", async (c) => {
+  const subjectId = c.req.param("subject_id") as ID<Subject>;
+  const subjectRepo = new D1SubjectRepository(c.env.DB);
+  const subject = await subjectRepo.getSubject(subjectId);
+  if (!subject) {
+    return c.text("Not Found", 404);
+  }
+
+  if (
+    !(await new D1SubjectStudentRepository(c.env.DB).deleteSubjectRelations(
+      subject,
+    ))
+  ) {
+    throw new Error("delete registration failed");
+  }
+  if (
+    !(await new D1SubjectTeacherRepository(c.env.DB).deleteSubjectRelations(
+      subject,
+    ))
+  ) {
+    throw new Error("delete charge failed");
+  }
+  if (!(await subjectRepo.deleteSubject(subject))) {
+    throw new Error("delete subject failed");
+  }
+  return new Response();
+});
+
 app.get("/subjects/:subject_id/all_attendances", async (c) => {
   const account = c.get("account");
   const subjectId = c.req.param("subject_id") as ID<Subject>;
