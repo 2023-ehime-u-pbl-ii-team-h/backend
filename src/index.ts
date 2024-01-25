@@ -363,6 +363,18 @@ app.put("/subjects/:subject_id/boards/:board_id", async (c) => {
   return new Response();
 });
 
+app.delete("/subjects/:subject_id/boards/:board_id", async (c) => {
+  const boardId = c.req.param("board_id") as ID<AttendanceBoard>;
+  const boardRepo = new D1AttendanceBoardRepository(c.env.DB);
+  const board = await boardRepo.getBoard(boardId);
+  if (!board) {
+    return c.text("Not Found", 404);
+  }
+
+  await boardRepo.delete(boardId);
+  return new Response(null, { status: 204 });
+});
+
 app.get("/subjects/:subject_id/boards/:board_id/attendances", async (c) => {
   const account = c.get("account");
   if (!isTeacher(account)) {
