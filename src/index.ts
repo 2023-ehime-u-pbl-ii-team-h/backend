@@ -208,7 +208,8 @@ app.post("/subjects", async (c) => {
   let jsonBody;
   try {
     jsonBody = await c.req.json();
-  } catch {
+  } catch (error) {
+    console.log(error);
     return c.text("", 400);
   }
   const schema = z.object({
