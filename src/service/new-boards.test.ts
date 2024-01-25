@@ -22,8 +22,8 @@ test("new boards", async () => {
   const insertBoardsSpy = vi.spyOn(repo, "insertBoards");
 
   const res = await newBoards({
+    subjectId: "sub01" as ID<Subject>,
     reqBody: {
-      subject: "sub01",
       boards: [
         {
           startFrom: "2024-04-01T13:30:00Z",
@@ -57,8 +57,8 @@ test("invalid body", async () => {
   };
 
   const res = await newBoards({
+    subjectId: "sub01" as ID<Subject>,
     reqBody: {
-      subject: "sub01",
       boards: [
         {
           statFrom: "2024-04-01T13:30:00Z",
@@ -88,8 +88,8 @@ test("insert failure", async () => {
 
   await expect(() =>
     newBoards({
+      subjectId: "sub01" as ID<Subject>,
       reqBody: {
-        subject: "sub01",
         boards: [
           {
             startFrom: "2024-04-01T13:30:00Z",
