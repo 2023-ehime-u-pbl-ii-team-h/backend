@@ -38,19 +38,21 @@ export class D1AttendanceBoardRepository
     };
   }
 
-  async update(board: AttendanceBoard): Promise<boolean> {
-    const { success } = await this.db
-      .prepare(
-        "UPDATE attendance_board SET start_from = ?1, seconds_from_start_to_be_late = ?2, seconds_from_be_late_to_end = ?3 WHERE id = ?4",
-      )
-      .bind(
-        Math.floor(board.startFrom.valueOf() / 1000),
-        board.secondsFromStartToBeLate,
-        board.secondsFromBeLateToEnd,
-        board.id,
-      )
-      .run();
-    return success;
+  async update(boards: AttendanceBoard[]): Promise<boolean> {
+    const updateStatement = this.db.prepare(
+      "UPDATE attendance_board SET start_from = ?1, seconds_from_start_to_be_late = ?2, seconds_from_be_late_to_end = ?3 WHERE id = ?4",
+    );
+    const rows = await this.db.batch(
+      boards.map((board) =>
+        updateStatement.bind(
+          Math.floor(board.startFrom.valueOf() / 1000),
+          board.secondsFromStartToBeLate,
+          board.secondsFromBeLateToEnd,
+          board.id,
+        ),
+      ),
+    );
+    return rows.every(({ success }) => success);
   }
 
   async delete(boardId: ID<AttendanceBoard>): Promise<boolean> {
