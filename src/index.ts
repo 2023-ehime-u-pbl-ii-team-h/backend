@@ -321,6 +321,18 @@ app.get("/subjects/:subject_id/all_attendances", async (c) => {
   return c.json(sum);
 });
 
+app.get("/subjects/:subject_id/boards", async (c) => {
+  const subjectId = c.req.param("subject_id") as ID<Subject>;
+  const subject = await new D1SubjectRepository(c.env.DB).getSubject(subjectId);
+  if (!subject) {
+    return c.text("", 404);
+  }
+
+  const repo = new D1AttendanceBoardRepository(c.env.DB);
+  const [boards] = await repo.boardsByEachSubject([subject]);
+  return c.json(boards);
+});
+
 app.post("/subjects/:subject_id/boards", async (c) => {
   const subjectId = c.req.param("subject_id") as ID<Subject>;
   const reqBody = await c.req.json();
