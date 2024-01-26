@@ -6,6 +6,7 @@
     "module": "ESNext",
     "moduleResolution": "Node",
     "types": ["@cloudflare/workers-types"],
-    "strict": true
-  }
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+  },
 }
