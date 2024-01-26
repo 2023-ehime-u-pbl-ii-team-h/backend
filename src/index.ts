@@ -8,11 +8,17 @@ import { D1SubjectTeacherRepository } from "./adaptor/subject-teacher";
 import { loginMiddleware } from "./middleware/login";
 import { Account, Teacher, isStudent, isTeacher } from "./model/account";
 import { Attendance } from "./model/attendance";
-import { AttendanceBoard, nextBoardEnd } from "./model/attendance-board";
+import {
+  AttendanceBoard,
+  nextBoardEnd,
+  shiftAll,
+  updateWith,
+} from "./model/attendance-board";
 import { ID } from "./model/id";
 import { Subject } from "./model/subject";
 import { attend } from "./service/attend";
 import { correctAttendance } from "./service/correct-attendance";
+import { EditBoardsResult, editBoards } from "./service/edit-boards";
 import { newBoards } from "./service/new-boards";
 import { newSubject } from "./service/new-subject";
 import { Hono } from "hono";
@@ -332,37 +338,22 @@ app.post("/subjects/:subject_id/boards", async (c) => {
 });
 
 app.put("/subjects/:subject_id/boards/:board_id", async (c) => {
+  const subjectId = c.req.param("subject_id") as ID<Subject>;
   const boardId = c.req.param("board_id") as ID<AttendanceBoard>;
-  const boardRepo = new D1AttendanceBoardRepository(c.env.DB);
-  const board = await boardRepo.getBoard(boardId);
-  if (!board) {
-    return c.text("Not Found", 404);
-  }
 
-  const reqBody: unknown = await c.req.json();
-  const schema = z.object({
-    start_from: z.string().datetime().optional(),
-    seconds_from_start_to_be_late: z.number().positive().optional(),
-    seconds_from_be_late_to_end: z.number().positive().optional(),
+  const result = await editBoards({
+    boardId,
+    subjectId,
+    boardRepo: new D1AttendanceBoardRepository(c.env.DB),
+    subjectRepo: new D1SubjectRepository(c.env.DB),
+    reqBody: await c.req.json(),
   });
-  const parseResult = await schema.safeParseAsync(reqBody);
-  if (!parseResult.success) {
-    return c.text("", 400);
-  }
-
-  const parsed = parseResult.data;
-  const newBoard = { ...board };
-  if (parsed.start_from) {
-    newBoard.startFrom = new Date(parsed.start_from);
-  }
-  if (parsed.seconds_from_start_to_be_late) {
-    newBoard.secondsFromStartToBeLate = parsed.seconds_from_start_to_be_late;
-  }
-  if (parsed.seconds_from_be_late_to_end) {
-    newBoard.secondsFromBeLateToEnd = parsed.seconds_from_be_late_to_end;
-  }
-  await boardRepo.update(newBoard);
-  return new Response();
+  const statuses: Record<EditBoardsResult, number> = {
+    OK: 200,
+    BAD_REQUEST: 400,
+    NOT_FOUND: 404,
+  };
+  return new Response(null, { status: statuses[result] });
 });
 
 app.delete("/subjects/:subject_id/boards/:board_id", async (c) => {
