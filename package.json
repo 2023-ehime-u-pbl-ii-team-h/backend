@@ -11,6 +11,7 @@
     "deploy": "wrangler publish src/index.ts"
   },
   "dependencies": {
+    "date-fns": "^3.3.1",
     "hono": "^3.12.6",
     "nanoid": "^5.0.4",
     "ua-parser-js": "^1.0.37",
