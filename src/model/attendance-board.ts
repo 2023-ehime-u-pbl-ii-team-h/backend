@@ -39,6 +39,26 @@ export function determineState(
   return "CLOSED";
 }
 
+export function updateWith(
+  old: AttendanceBoard,
+  partialNew: Omit<
+    { [key in keyof AttendanceBoard]: AttendanceBoard[key] | null },
+    "id" | "subject"
+  >,
+): AttendanceBoard {
+  const newer = { ...old };
+  if (partialNew.startFrom) {
+    newer.startFrom = partialNew.startFrom;
+  }
+  if (partialNew.secondsFromStartToBeLate) {
+    newer.secondsFromStartToBeLate = partialNew.secondsFromStartToBeLate;
+  }
+  if (partialNew.secondsFromBeLateToEnd) {
+    newer.secondsFromBeLateToEnd = partialNew.secondsFromBeLateToEnd;
+  }
+  return newer;
+}
+
 export function shiftAll(
   boards: readonly AttendanceBoard[],
   days: number,
