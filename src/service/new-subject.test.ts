@@ -1,6 +1,6 @@
 import { Account, Teacher } from "../model/account";
 import { ID } from "../model/id";
-import { SubjectRepository } from "../model/subject";
+import { SubjectRepository, dummySubjectRepo } from "../model/subject";
 import { AccountQueryService, newSubject } from "./new-subject";
 import { expect, test, vi } from "vitest";
 
@@ -9,9 +9,7 @@ test("new subject", async () => {
     existsAll: () => Promise.resolve(true),
   };
   const existsAllSpy = vi.spyOn(query, "existsAll");
-  const repo: SubjectRepository = {
-    createSubject: () => Promise.resolve(),
-  };
+  const repo: SubjectRepository = dummySubjectRepo;
   const createSubjectSpy = vi.spyOn(repo, "createSubject");
 
   const res = await newSubject({
@@ -43,9 +41,7 @@ test("teacher does not exist", async () => {
     existsAll: () => Promise.resolve(false),
   };
   const existsAllSpy = vi.spyOn(query, "existsAll");
-  const repo: SubjectRepository = {
-    createSubject: () => Promise.resolve(),
-  };
+  const repo: SubjectRepository = dummySubjectRepo;
 
   const res = await newSubject({
     account: {
@@ -71,9 +67,7 @@ test("assignees do not include me", async () => {
     existsAll: () => Promise.resolve(true),
   };
   const existsAllSpy = vi.spyOn(query, "existsAll");
-  const repo: SubjectRepository = {
-    createSubject: () => Promise.resolve(),
-  };
+  const repo: SubjectRepository = dummySubjectRepo;
 
   const res = await newSubject({
     account: {

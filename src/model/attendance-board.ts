@@ -18,6 +18,12 @@ export interface AttendanceBoardRepository {
 
   boardsByEachSubject(subjects: Subject[]): Promise<AttendanceBoard[][]>;
 }
+export const dummyBoardRepo: AttendanceBoardRepository = {
+  getBoard: () => Promise.resolve(null),
+  insertBoards: () => Promise.resolve(true),
+  update: () => Promise.resolve(true),
+  boardsByEachSubject: (subjects) => Promise.resolve(subjects.map(() => [])),
+};
 
 export type AttendanceState = "TOO_EARLY" | "ATTENDED" | "BE_LATE" | "CLOSED";
 

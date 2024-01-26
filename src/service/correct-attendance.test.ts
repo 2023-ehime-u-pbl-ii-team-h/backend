@@ -3,6 +3,7 @@ import { Attendance, AttendanceRepository } from "../model/attendance";
 import {
   AttendanceBoard,
   AttendanceBoardRepository,
+  dummyBoardRepo,
 } from "../model/attendance-board";
 import { ID } from "../model/id";
 import { Subject } from "../model/subject";
@@ -24,6 +25,7 @@ test("correct attendance", async () => {
   const getAttendanceSpy = vi.spyOn(attendanceRepo, "getAttendance");
   const updateAttendanceSpy = vi.spyOn(attendanceRepo, "updateAttendance");
   const boardRepo: AttendanceBoardRepository = {
+    ...dummyBoardRepo,
     getBoard: () =>
       Promise.resolve({
         id: "board01" as ID<AttendanceBoard>,
@@ -32,7 +34,6 @@ test("correct attendance", async () => {
         secondsFromStartToBeLate: 30 * 60,
         secondsFromBeLateToEnd: 60 * 60,
       }),
-    insertBoards: () => Promise.resolve(true),
   };
   const getBoardSpy = vi.spyOn(boardRepo, "getBoard");
 
@@ -73,6 +74,7 @@ test("not a teacher", async () => {
     updateAttendance: () => Promise.resolve(),
   };
   const boardRepo: AttendanceBoardRepository = {
+    ...dummyBoardRepo,
     getBoard: () =>
       Promise.resolve({
         id: "board01" as ID<AttendanceBoard>,
@@ -81,7 +83,6 @@ test("not a teacher", async () => {
         secondsFromStartToBeLate: 30 * 60,
         secondsFromBeLateToEnd: 60 * 60,
       }),
-    insertBoards: () => Promise.resolve(true),
   };
 
   const res = await correctAttendance({
@@ -107,6 +108,7 @@ test("not found attendance", async () => {
     updateAttendance: () => Promise.resolve(),
   };
   const boardRepo: AttendanceBoardRepository = {
+    ...dummyBoardRepo,
     getBoard: () =>
       Promise.resolve({
         id: "board01" as ID<AttendanceBoard>,
@@ -115,7 +117,6 @@ test("not found attendance", async () => {
         secondsFromStartToBeLate: 30 * 60,
         secondsFromBeLateToEnd: 60 * 60,
       }),
-    insertBoards: () => Promise.resolve(true),
   };
 
   const res = await correctAttendance({
@@ -147,6 +148,7 @@ test("cannot set to time before start of board", async () => {
     updateAttendance: () => Promise.resolve(),
   };
   const boardRepo: AttendanceBoardRepository = {
+    ...dummyBoardRepo,
     getBoard: () =>
       Promise.resolve({
         id: "board01" as ID<AttendanceBoard>,
@@ -155,7 +157,6 @@ test("cannot set to time before start of board", async () => {
         secondsFromStartToBeLate: 30 * 60,
         secondsFromBeLateToEnd: 60 * 60,
       }),
-    insertBoards: () => Promise.resolve(true),
   };
 
   const res = await correctAttendance({

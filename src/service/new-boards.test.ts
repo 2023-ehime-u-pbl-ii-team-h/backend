@@ -1,6 +1,7 @@
 import {
   AttendanceBoard,
   AttendanceBoardRepository,
+  dummyBoardRepo,
 } from "../model/attendance-board";
 import { ID } from "../model/id";
 import { Subject } from "../model/subject";
@@ -9,6 +10,7 @@ import { expect, test, vi } from "vitest";
 
 test("new boards", async () => {
   const repo: AttendanceBoardRepository = {
+    ...dummyBoardRepo,
     getBoard: () =>
       Promise.resolve({
         id: "board01" as ID<AttendanceBoard>,
@@ -17,7 +19,6 @@ test("new boards", async () => {
         secondsFromStartToBeLate: 30 * 60,
         secondsFromBeLateToEnd: 60 * 60,
       }),
-    insertBoards: () => Promise.resolve(true),
   };
   const insertBoardsSpy = vi.spyOn(repo, "insertBoards");
 
@@ -45,6 +46,7 @@ test("new boards", async () => {
 
 test("invalid body", async () => {
   const repo: AttendanceBoardRepository = {
+    ...dummyBoardRepo,
     getBoard: () =>
       Promise.resolve({
         id: "board01" as ID<AttendanceBoard>,
@@ -53,7 +55,6 @@ test("invalid body", async () => {
         secondsFromStartToBeLate: 30 * 60,
         secondsFromBeLateToEnd: 60 * 60,
       }),
-    insertBoards: () => Promise.resolve(true),
   };
 
   const res = await newBoards({
@@ -75,6 +76,7 @@ test("invalid body", async () => {
 
 test("insert failure", async () => {
   const repo: AttendanceBoardRepository = {
+    ...dummyBoardRepo,
     getBoard: () =>
       Promise.resolve({
         id: "board01" as ID<AttendanceBoard>,
@@ -83,7 +85,6 @@ test("insert failure", async () => {
         secondsFromStartToBeLate: 30 * 60,
         secondsFromBeLateToEnd: 60 * 60,
       }),
-    insertBoards: () => Promise.resolve(false),
   };
 
   await expect(() =>

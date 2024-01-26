@@ -15,3 +15,7 @@ export interface SubjectRepository {
 
   getSubject(subjectId: ID<Subject>): Promise<Subject | null>;
 }
+export const dummySubjectRepo: SubjectRepository = {
+  createSubject: () => Promise.resolve(),
+  getSubject: () => Promise.resolve(null),
+};
