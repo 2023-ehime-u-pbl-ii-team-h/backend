@@ -85,6 +85,7 @@ test("insert failure", async () => {
         secondsFromStartToBeLate: 30 * 60,
         secondsFromBeLateToEnd: 60 * 60,
       }),
+    insertBoards: () => Promise.reject(new Error("insert boards failed")),
   };
 
   await expect(() =>
