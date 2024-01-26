@@ -1,12 +1,10 @@
 import {
   AttendanceBoard,
   AttendanceBoardRepository,
-  shiftAll,
   updateWith,
 } from "../model/attendance-board";
 import { ID } from "../model/id";
 import { Subject, SubjectRepository } from "../model/subject";
-import { add, differenceInDays } from "date-fns";
 import { z } from "zod";
 
 export type EditBoardsDeps = {
@@ -49,25 +47,21 @@ export async function editBoards({
 
   const parsed = parseResult.data;
   if (parsed.change_all_after) {
-    const shiftDays = parsed.start_from
-      ? differenceInDays(
-          new Date(parsed.start_from),
-          boards[foundIndex].startFrom,
-        )
+    const shiftAmount = parsed.start_from
+      ? new Date(parsed.start_from).valueOf() -
+        boards[foundIndex].startFrom.valueOf()
       : 0;
     const partialNew = {
       secondsFromStartToBeLate: parsed.seconds_from_start_to_be_late ?? null,
       secondsFromBeLateToEnd: parsed.seconds_from_be_late_to_end ?? null,
     };
     boards.push(
-      ...boards
-        .splice(foundIndex)
-        .map((old) =>
-          updateWith(old, {
-            ...partialNew,
-            startFrom: add(old.startFrom, { days: shiftDays }),
-          }),
-        ),
+      ...boards.splice(foundIndex).map((old) =>
+        updateWith(old, {
+          ...partialNew,
+          startFrom: new Date(old.startFrom.valueOf() + shiftAmount),
+        }),
+      ),
     );
     await boardRepo.update(boards);
   } else {
