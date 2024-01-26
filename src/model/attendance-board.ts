@@ -11,7 +11,12 @@ export type AttendanceBoard = {
 
 export interface AttendanceBoardRepository {
   getBoard(boardId: ID<AttendanceBoard>): Promise<AttendanceBoard | null>;
+
   insertBoards(boards: readonly AttendanceBoard[]): Promise<boolean>;
+
+  update(boards: AttendanceBoard[]): Promise<boolean>;
+
+  boardsByEachSubject(subjects: Subject[]): Promise<AttendanceBoard[][]>;
 }
 
 export type AttendanceState = "TOO_EARLY" | "ATTENDED" | "BE_LATE" | "CLOSED";

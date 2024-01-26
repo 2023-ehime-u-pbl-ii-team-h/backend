@@ -12,4 +12,6 @@ export interface SubjectRepository {
     name: string,
     assignees: ID<Teacher>[],
   ): Promise<void>;
+
+  getSubject(subjectId: ID<Subject>): Promise<Subject | null>;
 }
